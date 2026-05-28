@@ -1,0 +1,219 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum NotificationType {
+  COMMENT
+  NEW_USER
+  SUPPORT_TICKET
+  STORE_ORDER
+  SYSTEM
+}
+
+model User {
+  id           String    @id @default(cuid())
+  username     String    @unique
+  email        String    @unique
+  passwordHash String
+  displayName  String
+  avatarUrl    String?
+  role         UserRole  @default(USER)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  
+  posts           Post[]
+  achievements    Achievement[]
+  comments        Comment[]
+  repositories    Repository[]
+  commits         Commit[]
+  storeOrders     StoreOrder[]
+  storeReviews    StoreReview[]
+  supportTickets  SupportTicket[]
+  notifications   Notification[]
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  authorId  String
+  isPinned  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  
+  author   User      @relation(fields: [authorId], references: [id])
+  comments Comment[]
+}
+
+model Achievement {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  iconUrl     String?
+  isFeatured  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  
+  authorId   String
+  author     User      @relation(fields: [authorId], references: [id])
+  comments   Comment[]
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  userId    String
+  targetType String   // post, achievement, home
+  targetId  String
+  createdAt DateTime @default(now())
+
+  user        User         @relation(fields: [userId], references: [id])
+  post        Post?        @relation(fields: [targetId], references: [id], map: "Comment_postId_fkey")
+  achievement Achievement? @relation(fields: [targetId], references: [id], map: "Comment_achievementId_fkey")
+}
+
+model Repository {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  ownerId     String
+  isPublic    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  
+  owner   User              @relation(fields: [ownerId], references: [id])
+  files   RepositoryFile[]
+  commits Commit[]
+}
+
+model RepositoryFile {
+  id           String   @id @default(cuid())
+  repositoryId String
+  path         String
+  content      String   @db.Text
+  commitHash   String
+  createdAt    DateTime @default(now())
+  
+  repository Repository @relation(fields: [repositoryId], references: [id])
+  
+  @@unique([repositoryId, path])
+}
+
+model Commit {
+  id           String   @id @default(cuid())
+  repositoryId String
+  message      String
+  authorId     String
+  hash         String   @unique
+  createdAt    DateTime @default(now())
+  
+  repository Repository @relation(fields: [repositoryId], references: [id])
+  author     User      @relation(fields: [authorId], references: [id])
+}
+
+enum ItemType {
+  SERVICE
+  PRODUCT
+}
+
+model StoreItem {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @db.Text
+  type        ItemType
+  price       Float
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  
+  orders  StoreOrder[]
+  reviews StoreReview[]
+}
+
+model StoreOrder {
+  id        String      @id @default(cuid())
+  itemId    String
+  userId    String
+  status    OrderStatus @default(PENDING)
+  createdAt DateTime    @default(now())
+  
+  item StoreItem @relation(fields: [itemId], references: [id])
+  user User      @relation(fields: [userId], references: [id])
+}
+
+model StoreReview {
+  id        String   @id @default(cuid())
+  itemId    String
+  userId    String
+  rating    Int      // 1-5 stars
+  comment   String?
+  createdAt DateTime @default(now())
+  
+  item StoreItem @relation(fields: [itemId], references: [id])
+  user User      @relation(fields: [userId], references: [id])
+  
+  @@unique([itemId, userId])
+}
+
+model SupportTicket {
+  id        String        @id @default(cuid())
+  userId    String
+  subject   String
+  message   String        @db.Text
+  status    TicketStatus  @default(OPEN)
+  createdAt DateTime      @default(now())
+  
+  user User @relation(fields: [userId], references: [id])
+}
+
+model FAQ {
+  id         Int      @id @default(autoincrement())
+  questionAr String   @db.Text
+  questionEn String   @db.Text
+  answerAr   String   @db.Text
+  answerEn   String   @db.Text
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  content   String           @db.Text
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  
+  user User @relation(fields: [userId], references: [id])
+}
+
+model SiteSettings {
+  id              Int      @id @default(1)
+  siteName        String   @default("The Qilin Team")
+  siteDescription String   @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
