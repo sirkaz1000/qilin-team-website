@@ -44,3 +44,5 @@ next-env.d.ts
 # avatars
 /public/images/avatars/*
 !/public/images/avatars/.gitkeep
+
+.vercel
