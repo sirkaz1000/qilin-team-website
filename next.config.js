@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'export',
   images: {
     domains: ['localhost'],
     remotePatterns: [
@@ -8,6 +9,7 @@ const nextConfig = {
         hostname: '**',
       },
     ],
+    unoptimized: true,
   },
   webpack: (config) => {
     config.resolve.alias = {
