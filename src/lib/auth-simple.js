@@ -51,15 +51,22 @@ function verifyToken(token) {
 }
 
 async function createUser(username, email, password, displayName, role = 'USER', avatarUrl = null) {
+  console.log('=== createUser ===')
+  console.log('Parameters:', { username, email, displayName, role, hasAvatarUrl: !!avatarUrl })
+  
   const users = getUsers()
+  console.log('Current users count:', users.length)
   
   // Check if user already exists
   if (users.find(u => u.username === username || u.email === email)) {
+    console.log('User already exists:', { username, email })
     throw new Error('User already exists')
   }
   
   // Hash password
+  console.log('Hashing password...')
   const passwordHash = await hashPassword(password)
+  console.log('Password hashed successfully')
   
   // Create user
   const newUser = {
@@ -74,11 +81,16 @@ async function createUser(username, email, password, displayName, role = 'USER',
     createdAt: new Date().toISOString(),
   }
   
+  console.log('New user object:', { id: newUser.id, username: newUser.username, email: newUser.email, hasAvatarUrl: !!newUser.avatarUrl })
+  
   users.push(newUser)
+  console.log('Saving users to file...')
   saveUsers(users)
+  console.log('Users saved successfully')
   
   // Return user without password
   const { passwordHash: _, ...userWithoutPassword } = newUser
+  console.log('User created successfully:', { id: userWithoutPassword.id, username: userWithoutPassword.username })
   return userWithoutPassword
 }
 
@@ -95,19 +107,28 @@ async function getUserById(id) {
 }
 
 async function authenticateUser(username, password) {
+  console.log('=== authenticateUser ===')
+  console.log('Parameters:', { username, hasPassword: !!password })
+  
   const user = await getUserByUsername(username)
+  console.log('User found:', { id: user?.id, username: user?.username, isActive: user?.isActive })
   
   if (!user || !user.isActive) {
+    console.log('Authentication failed: user not found or inactive')
     throw new Error('Invalid credentials')
   }
   
+  console.log('Comparing password...')
   const isValid = await comparePassword(password, user.passwordHash)
+  console.log('Password comparison result:', isValid)
   
   if (!isValid) {
+    console.log('Authentication failed: invalid password')
     throw new Error('Invalid credentials')
   }
   
   const { passwordHash: _, ...userWithoutPassword } = user
+  console.log('Authentication successful:', { id: userWithoutPassword.id, username: userWithoutPassword.username })
   return userWithoutPassword
 }
 

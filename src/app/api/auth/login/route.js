@@ -8,7 +8,9 @@ function sanitizeInput(input) {
 
 export async function POST(request) {
   try {
+    console.log('=== Login Request ===')
     const body = await request.json()
+    console.log('Request body:', { username: body.username, hasPassword: !!body.password })
     const { username, password } = body
 
     console.log('Login attempt for username:', username)
@@ -21,10 +23,12 @@ export async function POST(request) {
 
     // Sanitize inputs
     const sanitizedUsername = sanitizeInput(username.trim())
+    console.log('Sanitized username:', sanitizedUsername)
 
     // Authenticate user
+    console.log('Attempting to authenticate user...')
     const user = await authenticateUser(sanitizedUsername, password)
-    console.log('Authentication successful for user:', user.username)
+    console.log('Authentication successful for user:', { id: user.id, username: user.username, displayName: user.displayName })
 
     // Generate token
     const token = generateToken(user.id)
@@ -34,11 +38,13 @@ export async function POST(request) {
       token,
       user: user,
     })
-    console.log('Login response sent successfully')
+    console.log('Login successful')
     return response
   } catch (error) {
-    console.error('Login error:', error)
-    console.error('Error details:', error.message)
+    console.error('=== Login Error ===')
+    console.error('Error:', error)
+    console.error('Error message:', error.message)
+    console.error('Error stack:', error.stack)
     // Don't expose detailed error messages
     return Response.json({ error: error.message || 'Login failed' }, { status: 401 })
   }
