@@ -41,9 +41,6 @@ export default function RegisterPage() {
 
       const response = await fetch('/api/upload', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
         body: formData
       })
 
@@ -54,6 +51,9 @@ export default function RegisterPage() {
           avatarUrl: data.url
         })
         setAvatarFile(file)
+      } else {
+        const errorData = await response.json()
+        console.error('Upload error:', errorData.error)
       }
     } catch (error) {
       console.error('Error uploading avatar:', error)

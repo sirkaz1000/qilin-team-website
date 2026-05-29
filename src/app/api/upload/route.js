@@ -6,15 +6,12 @@ const crypto = require('crypto')
 export async function POST(request) {
   try {
     const authHeader = request.headers.get('authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const token = authHeader.substring(7)
-    const decoded = verifyToken(token)
-
-    if (!decoded) {
-      return Response.json({ error: 'Invalid token' }, { status: 401 })
+    
+    // Allow upload without token for registration
+    let decoded = null
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7)
+      decoded = verifyToken(token)
     }
 
     const formData = await request.formData()
@@ -24,16 +21,20 @@ export async function POST(request) {
       return Response.json({ error: 'No file provided' }, { status: 400 })
     }
 
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']
+    // Validate file type - allow images and videos
+    const allowedTypes = [
+      'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+      'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'
+    ]
     if (!allowedTypes.includes(file.type)) {
-      return Response.json({ error: 'Invalid file type' }, { status: 400 })
+      return Response.json({ error: 'Invalid file type. Allowed: images (JPEG, PNG, GIF, WebP, SVG) and videos (MP4, WebM, OGG, MOV)' }, { status: 400 })
     }
 
-    // Validate file size (max 5MB)
-    const maxSize = 5 * 1024 * 1024
+    // Validate file size (max 50MB for videos, 5MB for images)
+    const isVideo = file.type.startsWith('video/')
+    const maxSize = isVideo ? 50 * 1024 * 1024 : 5 * 1024 * 1024
     if (file.size > maxSize) {
-      return Response.json({ error: 'File too large (max 5MB)' }, { status: 400 })
+      return Response.json({ error: `File too large (max ${isVideo ? '50MB' : '5MB'})` }, { status: 400 })
     }
 
     // Generate unique filename
