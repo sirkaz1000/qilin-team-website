@@ -55,12 +55,7 @@ export async function POST(request) {
     const sanitizedAvatarUrl = avatarUrl ? sanitizeInput(avatarUrl.trim()) : null
 
     // Create user
-    const user = await createUser(sanitizedUsername, sanitizedEmail, password, sanitizedDisplayName, 'USER')
-
-    // Add avatarUrl if provided
-    if (sanitizedAvatarUrl) {
-      user.avatarUrl = sanitizedAvatarUrl
-    }
+    const user = await createUser(sanitizedUsername, sanitizedEmail, password, sanitizedDisplayName, 'USER', sanitizedAvatarUrl)
 
     // Generate token
     const token = generateToken(user.id)

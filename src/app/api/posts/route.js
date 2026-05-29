@@ -70,7 +70,7 @@ export async function POST(request) {
     }
 
     const body = await request.json()
-    const { title, content, isPinned } = body
+    const { title, content, isPinned, imageUrl, videoUrl } = body
 
     // Validate title
     const titleValidation = validateTitle(title)
@@ -92,6 +92,8 @@ export async function POST(request) {
       authorId: user.id,
       username: user.username,
       displayName: user.displayName,
+      imageUrl: imageUrl || null,
+      videoUrl: videoUrl || null,
       isPinned: isPinned || false,
       createdAt: new Date().toISOString()
     }

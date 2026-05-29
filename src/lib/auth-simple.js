@@ -50,7 +50,7 @@ function verifyToken(token) {
   }
 }
 
-async function createUser(username, email, password, displayName, role = 'USER') {
+async function createUser(username, email, password, displayName, role = 'USER', avatarUrl = null) {
   const users = getUsers()
   
   // Check if user already exists
@@ -69,6 +69,7 @@ async function createUser(username, email, password, displayName, role = 'USER')
     passwordHash,
     displayName,
     role,
+    avatarUrl,
     isActive: true,
     createdAt: new Date().toISOString(),
   }

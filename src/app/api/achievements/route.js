@@ -26,12 +26,14 @@ export async function POST(request) {
     }
 
     const body = await request.json()
-    const { title, description, iconUrl, isFeatured } = body
+    const { title, description, iconUrl, imageUrl, videoUrl, isFeatured } = body
 
     const achievement = createAchievement({
       title,
       description,
       iconUrl: iconUrl || null,
+      imageUrl: imageUrl || null,
+      videoUrl: videoUrl || null,
       isFeatured: isFeatured || false,
       authorId: decoded.userId,
     })
