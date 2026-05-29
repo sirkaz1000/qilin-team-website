@@ -56,9 +56,6 @@ export default function AchievementsPage() {
 
       const response = await fetch('/api/upload', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
         body: formData
       })
 
@@ -66,6 +63,9 @@ export default function AchievementsPage() {
         const data = await response.json()
         setIconUrl(data.url)
         setIconFile(file)
+      } else {
+        const errorData = await response.json()
+        console.error('Upload error:', errorData.error)
       }
     } catch (error) {
       console.error('Error uploading icon:', error)
@@ -85,9 +85,6 @@ export default function AchievementsPage() {
 
       const response = await fetch('/api/upload', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
         body: formData
       })
 
@@ -95,6 +92,9 @@ export default function AchievementsPage() {
         const data = await response.json()
         setImageUrl(data.url)
         setImageFile(file)
+      } else {
+        const errorData = await response.json()
+        console.error('Upload error:', errorData.error)
       }
     } catch (error) {
       console.error('Error uploading image:', error)
@@ -114,9 +114,6 @@ export default function AchievementsPage() {
 
       const response = await fetch('/api/upload', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
         body: formData
       })
 
@@ -124,6 +121,9 @@ export default function AchievementsPage() {
         const data = await response.json()
         setVideoUrl(data.url)
         setVideoFile(file)
+      } else {
+        const errorData = await response.json()
+        console.error('Upload error:', errorData.error)
       }
     } catch (error) {
       console.error('Error uploading video:', error)

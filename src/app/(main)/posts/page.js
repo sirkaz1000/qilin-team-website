@@ -55,9 +55,6 @@ export default function PostsPage() {
 
       const response = await fetch('/api/upload', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
         body: formData
       })
 
@@ -65,6 +62,9 @@ export default function PostsPage() {
         const data = await response.json()
         setImageUrl(data.url)
         setImageFile(file)
+      } else {
+        const errorData = await response.json()
+        console.error('Upload error:', errorData.error)
       }
     } catch (error) {
       console.error('Error uploading image:', error)
@@ -84,9 +84,6 @@ export default function PostsPage() {
 
       const response = await fetch('/api/upload', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
         body: formData
       })
 
@@ -94,6 +91,9 @@ export default function PostsPage() {
         const data = await response.json()
         setVideoUrl(data.url)
         setVideoFile(file)
+      } else {
+        const errorData = await response.json()
+        console.error('Upload error:', errorData.error)
       }
     } catch (error) {
       console.error('Error uploading video:', error)
