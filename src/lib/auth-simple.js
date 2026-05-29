@@ -39,16 +39,10 @@ async function comparePassword(password, hash) {
 }
 
 function generateToken(userId) {
-  if (!JWT_SECRET) {
-    throw new Error('JWT_SECRET is required')
-  }
   return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '7d' })
 }
 
 function verifyToken(token) {
-  if (!JWT_SECRET) {
-    throw new Error('JWT_SECRET is required')
-  }
   try {
     return jwt.verify(token, JWT_SECRET)
   } catch (error) {
