@@ -1,3 +1,6 @@
+const connectToDatabase = require('./mongodb')
+const Post = require('../models/Post')
+const Achievement = require('../models/Achievement')
 const fs = require('fs')
 const path = require('path')
 
@@ -34,140 +37,235 @@ function generateId() {
 }
 
 // Posts functions
-function getPosts() {
-  const posts = readDataFile('posts.json')
-  const users = readDataFile('users.json')
+async function getPosts() {
+  await connectToDatabase()
+  const posts = await Post.find().sort({ createdAt: -1 })
   return posts.map(post => ({
-    ...post,
-    author: users.find(u => u.id === post.authorId) || { id: post.authorId, username: 'Unknown', displayName: 'Unknown' },
-    comments: post.comments || []
+    ...post.toObject(),
+    id: post._id.toString()
   }))
 }
 
-function createPost(postData) {
-  const posts = readDataFile('posts.json')
-  const newPost = {
-    id: generateId(),
-    ...postData,
-    createdAt: new Date().toISOString(),
-    comments: []
+async function createPost(postData) {
+  await connectToDatabase()
+  const newPost = new Post(postData)
+  await newPost.save()
+  return {
+    ...newPost.toObject(),
+    id: newPost._id.toString()
   }
-  posts.push(newPost)
-  writeDataFile('posts.json', posts)
-  return newPost
 }
 
 // Achievements functions
-function getAchievements() {
-  return readDataFile('achievements.json')
+async function getAchievements() {
+  await connectToDatabase()
+  const achievements = await Achievement.find().sort({ createdAt: -1 })
+  return achievements.map(achievement => ({
+    ...achievement.toObject(),
+    id: achievement._id.toString()
+  }))
 }
 
-function createAchievement(achievementData) {
-  const achievements = readDataFile('achievements.json')
-  const newAchievement = {
-    id: generateId(),
-    ...achievementData,
-    createdAt: new Date().toISOString()
+async function createAchievement(achievementData) {
+  await connectToDatabase()
+  const newAchievement = new Achievement(achievementData)
+  await newAchievement.save()
+  return {
+    ...newAchievement.toObject(),
+    id: newAchievement._id.toString()
   }
-  achievements.push(newAchievement)
-  writeDataFile('achievements.json', achievements)
-  return newAchievement
 }
 
-// Repositories functions
+// Repositories functions (placeholder - using JSON for now)
 function getRepositories() {
-  return readDataFile('repositories.json')
+  const fs = require('fs')
+  const path = require('path')
+  try {
+    const filePath = path.join(process.cwd(), 'data', 'repositories.json')
+    if (!fs.existsSync(filePath)) {
+      return []
+    }
+    const data = fs.readFileSync(filePath, 'utf8')
+    return JSON.parse(data)
+  } catch (error) {
+    console.error(`Error reading repositories.json:`, error)
+    return []
+  }
 }
 
 function createRepository(repoData) {
-  const repositories = readDataFile('repositories.json')
-  const newRepo = {
-    id: generateId(),
-    ...repoData,
-    createdAt: new Date().toISOString()
+  const fs = require('fs')
+  const path = require('path')
+  try {
+    const repositories = getRepositories()
+    const newRepo = {
+      id: generateId(),
+      ...repoData,
+      createdAt: new Date().toISOString()
+    }
+    repositories.push(newRepo)
+    const filePath = path.join(process.cwd(), 'data', 'repositories.json')
+    fs.writeFileSync(filePath, JSON.stringify(repositories, null, 2))
+    return newRepo
+  } catch (error) {
+    console.error(`Error writing repositories.json:`, error)
+    return null
   }
-  repositories.push(newRepo)
-  writeDataFile('repositories.json', repositories)
-  return newRepo
 }
 
-// Store items functions
+// Store items functions (placeholder - using JSON for now)
 function getStoreItems() {
-  return readDataFile('store-items.json')
+  const fs = require('fs')
+  const path = require('path')
+  try {
+    const filePath = path.join(process.cwd(), 'data', 'store-items.json')
+    if (!fs.existsSync(filePath)) {
+      return []
+    }
+    const data = fs.readFileSync(filePath, 'utf8')
+    return JSON.parse(data)
+  } catch (error) {
+    console.error(`Error reading store-items.json:`, error)
+    return []
+  }
 }
 
 function createStoreItem(itemData) {
-  const items = readDataFile('store-items.json')
-  const newItem = {
-    id: generateId(),
-    ...itemData,
-    createdAt: new Date().toISOString(),
-    reviews: []
+  const fs = require('fs')
+  const path = require('path')
+  try {
+    const items = getStoreItems()
+    const newItem = {
+      id: generateId(),
+      ...itemData,
+      createdAt: new Date().toISOString(),
+      reviews: []
+    }
+    items.push(newItem)
+    const filePath = path.join(process.cwd(), 'data', 'store-items.json')
+    fs.writeFileSync(filePath, JSON.stringify(items, null, 2))
+    return newItem
+  } catch (error) {
+    console.error(`Error writing store-items.json:`, error)
+    return null
   }
-  items.push(newItem)
-  writeDataFile('store-items.json', items)
-  return newItem
 }
 
 function updateStoreItem(id, itemData) {
-  const items = readDataFile('store-items.json')
-  const index = items.findIndex(item => item.id === id)
-  if (index === -1) {
+  const fs = require('fs')
+  const path = require('path')
+  try {
+    const items = getStoreItems()
+    const index = items.findIndex(item => item.id === id)
+    if (index === -1) {
+      return null
+    }
+    items[index] = {
+      ...items[index],
+      ...itemData,
+      updatedAt: new Date().toISOString()
+    }
+    const filePath = path.join(process.cwd(), 'data', 'store-items.json')
+    fs.writeFileSync(filePath, JSON.stringify(items, null, 2))
+    return items[index]
+  } catch (error) {
+    console.error(`Error writing store-items.json:`, error)
     return null
   }
-  items[index] = {
-    ...items[index],
-    ...itemData,
-    updatedAt: new Date().toISOString()
-  }
-  writeDataFile('store-items.json', items)
-  return items[index]
 }
 
 function deleteStoreItem(id) {
-  const items = readDataFile('store-items.json')
-  const index = items.findIndex(item => item.id === id)
-  if (index === -1) {
+  const fs = require('fs')
+  const path = require('path')
+  try {
+    const items = getStoreItems()
+    const index = items.findIndex(item => item.id === id)
+    if (index === -1) {
+      return false
+    }
+    items.splice(index, 1)
+    const filePath = path.join(process.cwd(), 'data', 'store-items.json')
+    fs.writeFileSync(filePath, JSON.stringify(items, null, 2))
+    return true
+  } catch (error) {
+    console.error(`Error writing store-items.json:`, error)
     return false
   }
-  items.splice(index, 1)
-  writeDataFile('store-items.json', items)
-  return true
 }
 
-// Tickets functions
+// Tickets functions (placeholder - using JSON for now)
 function getTickets() {
-  return readDataFile('tickets.json')
+  const fs = require('fs')
+  const path = require('path')
+  try {
+    const filePath = path.join(process.cwd(), 'data', 'tickets.json')
+    if (!fs.existsSync(filePath)) {
+      return []
+    }
+    const data = fs.readFileSync(filePath, 'utf8')
+    return JSON.parse(data)
+  } catch (error) {
+    console.error(`Error reading tickets.json:`, error)
+    return []
+  }
 }
 
 function createTicket(ticketData) {
-  const tickets = readDataFile('tickets.json')
-  const newTicket = {
-    id: generateId(),
-    ...ticketData,
-    createdAt: new Date().toISOString(),
-    status: 'OPEN'
+  const fs = require('fs')
+  const path = require('path')
+  try {
+    const tickets = getTickets()
+    const newTicket = {
+      id: generateId(),
+      ...ticketData,
+      createdAt: new Date().toISOString(),
+      status: 'OPEN'
+    }
+    tickets.push(newTicket)
+    const filePath = path.join(process.cwd(), 'data', 'tickets.json')
+    fs.writeFileSync(filePath, JSON.stringify(tickets, null, 2))
+    return newTicket
+  } catch (error) {
+    console.error(`Error writing tickets.json:`, error)
+    return null
   }
-  tickets.push(newTicket)
-  writeDataFile('tickets.json', tickets)
-  return newTicket
 }
 
-// FAQ functions
+// FAQ functions (placeholder - using JSON for now)
 function getFAQs() {
-  return readDataFile('faq.json')
+  const fs = require('fs')
+  const path = require('path')
+  try {
+    const filePath = path.join(process.cwd(), 'data', 'faq.json')
+    if (!fs.existsSync(filePath)) {
+      return []
+    }
+    const data = fs.readFileSync(filePath, 'utf8')
+    return JSON.parse(data)
+  } catch (error) {
+    console.error(`Error reading faq.json:`, error)
+    return []
+  }
 }
 
 function createFAQ(faqData) {
-  const faqs = readDataFile('faq.json')
-  const newFAQ = {
-    id: generateId(),
-    ...faqData,
-    createdAt: new Date().toISOString()
+  const fs = require('fs')
+  const path = require('path')
+  try {
+    const faqs = getFAQs()
+    const newFAQ = {
+      id: generateId(),
+      ...faqData,
+      createdAt: new Date().toISOString()
+    }
+    faqs.push(newFAQ)
+    const filePath = path.join(process.cwd(), 'data', 'faq.json')
+    fs.writeFileSync(filePath, JSON.stringify(faqs, null, 2))
+    return newFAQ
+  } catch (error) {
+    console.error(`Error writing faq.json:`, error)
+    return null
   }
-  faqs.push(newFAQ)
-  writeDataFile('faq.json', faqs)
-  return newFAQ
 }
 
 module.exports = {

@@ -1,34 +1,9 @@
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-const fs = require('fs')
-const path = require('path')
-const crypto = require('crypto')
+const connectToDatabase = require('./mongodb')
+const User = require('../models/User')
 
-const USERS_FILE = path.join(process.cwd(), 'data', 'users.json')
 const JWT_SECRET = process.env.JWT_SECRET || '497b4464ab148e30db01414cd960d065c696453caca9ecfd5ce64fa8ec78a4bd'
-
-// Ensure users file exists
-if (!fs.existsSync(path.dirname(USERS_FILE))) {
-  fs.mkdirSync(path.dirname(USERS_FILE), { recursive: true })
-}
-
-if (!fs.existsSync(USERS_FILE)) {
-  fs.writeFileSync(USERS_FILE, JSON.stringify([], null, 2))
-}
-
-// Helper functions
-function getUsers() {
-  try {
-    const data = fs.readFileSync(USERS_FILE, 'utf8')
-    return JSON.parse(data)
-  } catch (error) {
-    return []
-  }
-}
-
-function saveUsers(users) {
-  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2))
-}
 
 async function hashPassword(password) {
   return bcrypt.hash(password, 12)
@@ -51,14 +26,14 @@ function verifyToken(token) {
 }
 
 async function createUser(username, email, password, displayName, role = 'USER', avatarUrl = null) {
-  console.log('=== createUser ===')
+  console.log('=== createUser (MongoDB) ===')
   console.log('Parameters:', { username, email, displayName, role, hasAvatarUrl: !!avatarUrl })
   
-  const users = getUsers()
-  console.log('Current users count:', users.length)
+  await connectToDatabase()
   
   // Check if user already exists
-  if (users.find(u => u.username === username || u.email === email)) {
+  const existingUser = await User.findOne({ $or: [{ username }, { email }] })
+  if (existingUser) {
     console.log('User already exists:', { username, email })
     throw new Error('User already exists')
   }
@@ -69,8 +44,7 @@ async function createUser(username, email, password, displayName, role = 'USER',
   console.log('Password hashed successfully')
   
   // Create user
-  const newUser = {
-    id: crypto.randomUUID(),
+  const newUser = new User({
     username,
     email,
     passwordHash,
@@ -78,40 +52,45 @@ async function createUser(username, email, password, displayName, role = 'USER',
     role,
     avatarUrl,
     isActive: true,
-    createdAt: new Date().toISOString(),
-  }
+  })
   
-  console.log('New user object:', { id: newUser.id, username: newUser.username, email: newUser.email, hasAvatarUrl: !!newUser.avatarUrl })
-  
-  users.push(newUser)
-  console.log('Saving users to file...')
-  saveUsers(users)
-  console.log('Users saved successfully')
+  console.log('Saving user to MongoDB...')
+  await newUser.save()
+  console.log('User saved successfully')
   
   // Return user without password
-  const { passwordHash: _, ...userWithoutPassword } = newUser
-  console.log('User created successfully:', { id: userWithoutPassword.id, username: userWithoutPassword.username })
-  return userWithoutPassword
+  const userObj = newUser.toObject()
+  delete userObj.passwordHash
+  console.log('User created successfully:', { id: userObj._id, username: userObj.username })
+  return { ...userObj, id: userObj._id.toString() }
 }
 
 async function getUserByUsername(username) {
-  const users = getUsers()
-  const user = users.find(u => u.username === username)
-  return user
+  await connectToDatabase()
+  const user = await User.findOne({ username })
+  if (!user) return null
+  const userObj = user.toObject()
+  delete userObj.passwordHash
+  return { ...userObj, id: user._id.toString() }
 }
 
 async function getUserById(id) {
-  const users = getUsers()
-  const user = users.find(u => u.id === id)
-  return user
+  await connectToDatabase()
+  const user = await User.findById(id)
+  if (!user) return null
+  const userObj = user.toObject()
+  delete userObj.passwordHash
+  return { ...userObj, id: user._id.toString() }
 }
 
 async function authenticateUser(username, password) {
-  console.log('=== authenticateUser ===')
+  console.log('=== authenticateUser (MongoDB) ===')
   console.log('Parameters:', { username, hasPassword: !!password })
   
-  const user = await getUserByUsername(username)
-  console.log('User found:', { id: user?.id, username: user?.username, isActive: user?.isActive })
+  await connectToDatabase()
+  
+  const user = await User.findOne({ username })
+  console.log('User found:', { id: user?._id, username: user?.username, isActive: user?.isActive })
   
   if (!user || !user.isActive) {
     console.log('Authentication failed: user not found or inactive')
@@ -127,9 +106,10 @@ async function authenticateUser(username, password) {
     throw new Error('Invalid credentials')
   }
   
-  const { passwordHash: _, ...userWithoutPassword } = user
-  console.log('Authentication successful:', { id: userWithoutPassword.id, username: userWithoutPassword.username })
-  return userWithoutPassword
+  const userObj = user.toObject()
+  delete userObj.passwordHash
+  console.log('Authentication successful:', { id: userObj._id, username: userObj.username })
+  return { ...userObj, id: user._id.toString() }
 }
 
 module.exports = {

@@ -3,7 +3,7 @@ const { getAchievements, createAchievement } = require('@/lib/data-simple')
 
 export async function GET(request) {
   try {
-    const achievements = getAchievements()
+    const achievements = await getAchievements()
     return Response.json(achievements)
   } catch (error) {
     console.error('Error fetching achievements:', error)
@@ -28,7 +28,7 @@ export async function POST(request) {
     const body = await request.json()
     const { title, description, iconUrl, imageUrl, videoUrl, isFeatured } = body
 
-    const achievement = createAchievement({
+    const achievement = await createAchievement({
       title,
       description,
       iconUrl: iconUrl || null,

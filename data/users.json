@@ -9,5 +9,16 @@
     "isActive": true,
     "createdAt": "2026-05-25T06:00:00.000Z",
     "avatarUrl": "/uploads/17276c09-7324-4dcd-acca-e9b0aefabcf2.jpg"
+  },
+  {
+    "id": "a7984d5f-8e21-4318-933e-502284184245",
+    "username": "testuser",
+    "email": "test@example.com",
+    "passwordHash": "$2a$12$J54ki.zApR36z6/V1pV3SuDmCWsLLWKvtgrGd1D3HjjsTGW3rbRzm",
+    "displayName": "Test User",
+    "role": "USER",
+    "avatarUrl": null,
+    "isActive": true,
+    "createdAt": "2026-05-29T03:40:30.551Z"
   }
 ]

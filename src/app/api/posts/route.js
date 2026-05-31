@@ -29,19 +29,8 @@ function validateContent(content) {
 
 export async function GET(request) {
   try {
-    const posts = readDataFile('posts.json')
-    const users = readDataFile('users.json')
-    
-    // Add user info to posts
-    const postsWithUserInfo = posts.map(post => ({
-      ...post,
-      author: {
-        username: users.find(u => u.id === post.authorId)?.username || 'Unknown',
-        displayName: users.find(u => u.id === post.authorId)?.displayName || 'Unknown'
-      }
-    }))
-    
-    return Response.json(postsWithUserInfo)
+    const posts = await getPosts()
+    return Response.json(posts)
   } catch (error) {
     console.error('Error fetching posts:', error)
     return Response.json({ error: 'Failed to fetch posts' }, { status: 500 })
@@ -84,9 +73,7 @@ export async function POST(request) {
       return Response.json({ error: contentValidation.error }, { status: 400 })
     }
 
-    const posts = readDataFile('posts.json')
-    const newPost = {
-      id: generateId(),
+    const newPost = await createPost({
       title: sanitizeInput(title.trim()),
       content: sanitizeInput(content.trim()),
       authorId: user.id,
@@ -95,10 +82,7 @@ export async function POST(request) {
       imageUrl: imageUrl || null,
       videoUrl: videoUrl || null,
       isPinned: isPinned || false,
-      createdAt: new Date().toISOString()
-    }
-    posts.push(newPost)
-    writeDataFile('posts.json', posts)
+    })
 
     return Response.json(newPost)
   } catch (error) {
