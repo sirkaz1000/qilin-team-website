@@ -1,0 +1,1 @@
+mongodb+srv://sirkaz1000_db_user:zE6LWmp3yp2Fd0Aej@qilin.gos3qrk.mongodb.net/qilin-team

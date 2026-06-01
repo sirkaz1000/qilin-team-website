@@ -1,7 +1,6 @@
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-const connectToDatabase = require('./mongodb')
-const User = require('../models/User')
+const { query } = require('./postgres')
 
 const JWT_SECRET = process.env.JWT_SECRET || '497b4464ab148e30db01414cd960d065c696453caca9ecfd5ce64fa8ec78a4bd'
 
@@ -26,14 +25,15 @@ function verifyToken(token) {
 }
 
 async function createUser(username, email, password, displayName, role = 'USER', avatarUrl = null) {
-  console.log('=== createUser (MongoDB) ===')
+  console.log('=== createUser (PostgreSQL) ===')
   console.log('Parameters:', { username, email, displayName, role, hasAvatarUrl: !!avatarUrl })
   
-  await connectToDatabase()
-  
   // Check if user already exists
-  const existingUser = await User.findOne({ $or: [{ username }, { email }] })
-  if (existingUser) {
+  const existingUser = await query(
+    'SELECT id FROM users WHERE username = $1 OR email = $2',
+    [username, email]
+  )
+  if (existingUser.rows.length > 0) {
     console.log('User already exists:', { username, email })
     throw new Error('User already exists')
   }
@@ -44,61 +44,60 @@ async function createUser(username, email, password, displayName, role = 'USER',
   console.log('Password hashed successfully')
   
   // Create user
-  const newUser = new User({
-    username,
-    email,
-    passwordHash,
-    displayName,
-    role,
-    avatarUrl,
-    isActive: true,
-  })
-  
-  console.log('Saving user to MongoDB...')
-  await newUser.save()
+  console.log('Saving user to PostgreSQL...')
+  const result = await query(
+    'INSERT INTO users (username, email, password_hash, display_name, role, avatar_url, is_active) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+    [username, email, passwordHash, displayName, role, avatarUrl, true]
+  )
   console.log('User saved successfully')
   
   // Return user without password
-  const userObj = newUser.toObject()
-  delete userObj.passwordHash
-  console.log('User created successfully:', { id: userObj._id, username: userObj.username })
-  return { ...userObj, id: userObj._id.toString() }
+  const user = result.rows[0]
+  delete user.password_hash
+  console.log('User created successfully:', { id: user.id, username: user.username })
+  return user
 }
 
 async function getUserByUsername(username) {
-  await connectToDatabase()
-  const user = await User.findOne({ username })
-  if (!user) return null
-  const userObj = user.toObject()
-  delete userObj.passwordHash
-  return { ...userObj, id: user._id.toString() }
+  const result = await query(
+    'SELECT * FROM users WHERE username = $1',
+    [username]
+  )
+  if (result.rows.length === 0) return null
+  const user = result.rows[0]
+  delete user.password_hash
+  return user
 }
 
 async function getUserById(id) {
-  await connectToDatabase()
-  const user = await User.findById(id)
-  if (!user) return null
-  const userObj = user.toObject()
-  delete userObj.passwordHash
-  return { ...userObj, id: user._id.toString() }
+  const result = await query(
+    'SELECT * FROM users WHERE id = $1',
+    [id]
+  )
+  if (result.rows.length === 0) return null
+  const user = result.rows[0]
+  delete user.password_hash
+  return user
 }
 
 async function authenticateUser(username, password) {
-  console.log('=== authenticateUser (MongoDB) ===')
+  console.log('=== authenticateUser (PostgreSQL) ===')
   console.log('Parameters:', { username, hasPassword: !!password })
   
-  await connectToDatabase()
+  const result = await query(
+    'SELECT * FROM users WHERE username = $1',
+    [username]
+  )
+  const user = result.rows[0]
+  console.log('User found:', { id: user?.id, username: user?.username, isActive: user?.is_active })
   
-  const user = await User.findOne({ username })
-  console.log('User found:', { id: user?._id, username: user?.username, isActive: user?.isActive })
-  
-  if (!user || !user.isActive) {
+  if (!user || !user.is_active) {
     console.log('Authentication failed: user not found or inactive')
     throw new Error('Invalid credentials')
   }
   
   console.log('Comparing password...')
-  const isValid = await comparePassword(password, user.passwordHash)
+  const isValid = await comparePassword(password, user.password_hash)
   console.log('Password comparison result:', isValid)
   
   if (!isValid) {
@@ -106,10 +105,9 @@ async function authenticateUser(username, password) {
     throw new Error('Invalid credentials')
   }
   
-  const userObj = user.toObject()
-  delete userObj.passwordHash
-  console.log('Authentication successful:', { id: userObj._id, username: userObj.username })
-  return { ...userObj, id: user._id.toString() }
+  delete user.password_hash
+  console.log('Authentication successful:', { id: user.id, username: user.username })
+  return user
 }
 
 module.exports = {
