@@ -1,4 +1,4 @@
-import mongoose from 'mongoose'
+const mongoose = require('mongoose')
 
 const AchievementSchema = new mongoose.Schema({
   title: {
@@ -35,4 +35,4 @@ const AchievementSchema = new mongoose.Schema({
   }
 })
 
-export default mongoose.models.Achievement || mongoose.model('Achievement', AchievementSchema)
+module.exports = mongoose.models.Achievement || mongoose.model('Achievement', AchievementSchema)
