@@ -1,9 +1,66 @@
 const fs = require('fs')
 const path = require('path')
 
-// In-memory storage
-let posts = []
-let achievements = []
+// Load posts from JSON file
+function loadPosts() {
+  try {
+    const filePath = path.join(process.cwd(), 'data', 'posts.json')
+    if (fs.existsSync(filePath)) {
+      const data = fs.readFileSync(filePath, 'utf8')
+      return JSON.parse(data)
+    }
+    return []
+  } catch (error) {
+    console.log('Could not load posts from file:', error)
+    return []
+  }
+}
+
+// Save posts to JSON file
+function savePosts(posts) {
+  try {
+    const filePath = path.join(process.cwd(), 'data', 'posts.json')
+    const dir = path.dirname(filePath)
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true })
+    }
+    fs.writeFileSync(filePath, JSON.stringify(posts, null, 2))
+  } catch (error) {
+    console.log('Could not save posts to file:', error)
+  }
+}
+
+// Load achievements from JSON file
+function loadAchievements() {
+  try {
+    const filePath = path.join(process.cwd(), 'data', 'achievements.json')
+    if (fs.existsSync(filePath)) {
+      const data = fs.readFileSync(filePath, 'utf8')
+      return JSON.parse(data)
+    }
+    return []
+  } catch (error) {
+    console.log('Could not load achievements from file:', error)
+    return []
+  }
+}
+
+// Save achievements to JSON file
+function saveAchievements(achievements) {
+  try {
+    const filePath = path.join(process.cwd(), 'data', 'achievements.json')
+    const dir = path.dirname(filePath)
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true })
+    }
+    fs.writeFileSync(filePath, JSON.stringify(achievements, null, 2))
+  } catch (error) {
+    console.log('Could not save achievements to file:', error)
+  }
+}
+
+let posts = loadPosts()
+let achievements = loadAchievements()
 
 // Helper function to read JSON file
 function readDataFile(filename) {
@@ -60,6 +117,7 @@ async function createPost(postData) {
     createdAt: new Date()
   }
   posts.push(newPost)
+  savePosts(posts)
   return {
     ...newPost,
     id: newPost.id.toString()
@@ -88,6 +146,7 @@ async function createAchievement(achievementData) {
     createdAt: new Date()
   }
   achievements.push(newAchievement)
+  saveAchievements(achievements)
   return {
     ...newAchievement,
     id: newAchievement.id.toString()

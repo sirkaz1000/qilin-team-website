@@ -1,10 +1,40 @@
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
+const fs = require('fs')
+const path = require('path')
 
 const JWT_SECRET = process.env.JWT_SECRET || '497b4464ab148e30db01414cd960d065c696453caca9ecfd5ce64fa8ec78a4bd'
 
-// In-memory storage
-let users = []
+// Load users from JSON file
+function loadUsers() {
+  try {
+    const filePath = path.join(process.cwd(), 'data', 'users.json')
+    if (fs.existsSync(filePath)) {
+      const data = fs.readFileSync(filePath, 'utf8')
+      return JSON.parse(data)
+    }
+    return []
+  } catch (error) {
+    console.log('Could not load users from file:', error)
+    return []
+  }
+}
+
+// Save users to JSON file
+function saveUsers(users) {
+  try {
+    const filePath = path.join(process.cwd(), 'data', 'users.json')
+    const dir = path.dirname(filePath)
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true })
+    }
+    fs.writeFileSync(filePath, JSON.stringify(users, null, 2))
+  } catch (error) {
+    console.log('Could not save users to file:', error)
+  }
+}
+
+let users = loadUsers()
 
 async function hashPassword(password) {
   return bcrypt.hash(password, 12)
@@ -27,7 +57,7 @@ function verifyToken(token) {
 }
 
 async function createUser(username, email, password, displayName, role = 'USER', avatarUrl = null) {
-  console.log('=== createUser (In-memory) ===')
+  console.log('=== createUser (JSON file) ===')
   console.log('Parameters:', { username, email, displayName, role, hasAvatarUrl: !!avatarUrl })
   
   // Check if user already exists
@@ -55,8 +85,9 @@ async function createUser(username, email, password, displayName, role = 'USER',
     createdAt: new Date()
   }
   
-  console.log('Saving user to memory...')
+  console.log('Saving user to JSON file...')
   users.push(newUser)
+  saveUsers(users)
   console.log('User saved successfully')
   
   // Return user without password
