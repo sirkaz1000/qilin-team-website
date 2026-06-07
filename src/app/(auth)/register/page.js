@@ -10,7 +10,6 @@ export default function RegisterPage() {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    confirmPassword: '',
     displayName: '',
     username: '',
     avatarUrl: '',
@@ -66,11 +65,6 @@ export default function RegisterPage() {
     e.preventDefault()
     setError('')
 
-    if (formData.password !== formData.confirmPassword) {
-      setError(t('passwordsDoNotMatch') || 'Passwords do not match')
-      return
-    }
-
     setLoading(true)
 
     try {
@@ -114,7 +108,6 @@ export default function RegisterPage() {
               id="email"
               name="email"
               type="email"
-              required
               value={formData.email}
               onChange={handleChange}
               className="appearance-none relative block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 placeholder-gray-500 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-qilin-blue focus:border-transparent bg-white dark:bg-gray-700"
@@ -130,7 +123,6 @@ export default function RegisterPage() {
               id="displayName"
               name="displayName"
               type="text"
-              required
               value={formData.displayName}
               onChange={handleChange}
               className="appearance-none relative block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 placeholder-gray-500 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-qilin-blue focus:border-transparent bg-white dark:bg-gray-700"
@@ -146,7 +138,6 @@ export default function RegisterPage() {
               id="username"
               name="username"
               type="text"
-              required
               value={formData.username}
               onChange={handleChange}
               className="appearance-none relative block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 placeholder-gray-500 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-qilin-blue focus:border-transparent bg-white dark:bg-gray-700"
@@ -162,27 +153,10 @@ export default function RegisterPage() {
               id="password"
               name="password"
               type="password"
-              required
               value={formData.password}
               onChange={handleChange}
               className="appearance-none relative block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 placeholder-gray-500 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-qilin-blue focus:border-transparent bg-white dark:bg-gray-700"
               placeholder={t('password')}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {t('confirmPassword')}
-            </label>
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              required
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              className="appearance-none relative block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 placeholder-gray-500 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-qilin-blue focus:border-transparent bg-white dark:bg-gray-700"
-              placeholder={t('confirmPassword')}
             />
           </div>
 
