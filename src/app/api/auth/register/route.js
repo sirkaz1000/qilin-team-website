@@ -1,15 +1,9 @@
-const { createUser, generateToken, validatePasswordStrength } = require('@/lib/auth-simple')
+const { createUser, generateToken } = require('@/lib/auth-simple')
 
 // Input validation helpers
 function validateEmail(email) {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   return emailRegex.test(email)
-}
-
-function validateUsername(username) {
-  // Username: 3-20 characters, alphanumeric and underscores only
-  const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/
-  return usernameRegex.test(username)
 }
 
 function sanitizeInput(input) {
@@ -23,7 +17,7 @@ export async function POST(request) {
     console.log('=== Registration Request ===')
     const body = await request.json()
     console.log('Request body:', { email: body.email, username: body.username, displayName: body.displayName, hasPassword: !!body.password, hasAvatarUrl: !!body.avatarUrl })
-    const { email, password, confirmPassword, displayName, username, avatarUrl } = body
+    const { email, password, displayName, username, avatarUrl } = body
 
     // Basic validation
     if (!email || !password || !displayName || !username) {
@@ -35,24 +29,6 @@ export async function POST(request) {
     if (!validateEmail(email)) {
       console.log('Validation failed: invalid email format')
       return Response.json({ error: 'Invalid email format' }, { status: 400 })
-    }
-
-    // Validate username format
-    if (!validateUsername(username)) {
-      console.log('Validation failed: invalid username format')
-      return Response.json({ error: 'Username must be 3-20 characters and contain only letters, numbers, and underscores' }, { status: 400 })
-    }
-
-    // Validate password strength
-    const passwordValidation = validatePasswordStrength(password)
-    if (!passwordValidation.isValid) {
-      console.log('Validation failed: password too weak', passwordValidation.errors)
-      return Response.json({ error: passwordValidation.errors.join(', ') }, { status: 400 })
-    }
-
-    if (password !== confirmPassword) {
-      console.log('Validation failed: passwords do not match')
-      return Response.json({ error: 'Passwords do not match' }, { status: 400 })
     }
 
     // Sanitize inputs
