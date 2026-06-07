@@ -1,4 +1,38 @@
 const { query } = require('./postgres')
+const fs = require('fs')
+const path = require('path')
+
+// Helper function to generate unique ID
+function generateId() {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2)
+}
+
+// Helper function to read JSON file
+function readDataFile(filename) {
+  try {
+    const filePath = path.join(process.cwd(), 'data', filename)
+    if (!fs.existsSync(filePath)) {
+      return []
+    }
+    const data = fs.readFileSync(filePath, 'utf8')
+    return JSON.parse(data)
+  } catch (error) {
+    console.error(`Error reading ${filename}:`, error)
+    return []
+  }
+}
+
+// Helper function to write JSON file
+function writeDataFile(filename, data) {
+  try {
+    const filePath = path.join(process.cwd(), 'data', filename)
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2))
+    return true
+  } catch (error) {
+    console.error(`Error writing ${filename}:`, error)
+    return false
+  }
+}
 
 // Posts functions
 async function getPosts() {
