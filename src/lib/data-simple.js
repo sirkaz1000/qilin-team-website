@@ -1,102 +1,11 @@
-const fs = require('fs')
-const path = require('path')
-
-// Load posts from JSON file
-function loadPosts() {
-  try {
-    const filePath = path.join(process.cwd(), 'data', 'posts.json')
-    if (fs.existsSync(filePath)) {
-      const data = fs.readFileSync(filePath, 'utf8')
-      return JSON.parse(data)
-    }
-    return []
-  } catch (error) {
-    console.log('Could not load posts from file:', error)
-    return []
-  }
-}
-
-// Save posts to JSON file
-function savePosts(posts) {
-  try {
-    const filePath = path.join(process.cwd(), 'data', 'posts.json')
-    const dir = path.dirname(filePath)
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true })
-    }
-    fs.writeFileSync(filePath, JSON.stringify(posts, null, 2))
-  } catch (error) {
-    console.log('Could not save posts to file:', error)
-  }
-}
-
-// Load achievements from JSON file
-function loadAchievements() {
-  try {
-    const filePath = path.join(process.cwd(), 'data', 'achievements.json')
-    if (fs.existsSync(filePath)) {
-      const data = fs.readFileSync(filePath, 'utf8')
-      return JSON.parse(data)
-    }
-    return []
-  } catch (error) {
-    console.log('Could not load achievements from file:', error)
-    return []
-  }
-}
-
-// Save achievements to JSON file
-function saveAchievements(achievements) {
-  try {
-    const filePath = path.join(process.cwd(), 'data', 'achievements.json')
-    const dir = path.dirname(filePath)
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true })
-    }
-    fs.writeFileSync(filePath, JSON.stringify(achievements, null, 2))
-  } catch (error) {
-    console.log('Could not save achievements to file:', error)
-  }
-}
-
-let posts = loadPosts()
-let achievements = loadAchievements()
-
-// Helper function to read JSON file
-function readDataFile(filename) {
-  try {
-    const filePath = path.join(process.cwd(), 'data', filename)
-    if (!fs.existsSync(filePath)) {
-      return []
-    }
-    const data = fs.readFileSync(filePath, 'utf8')
-    return JSON.parse(data)
-  } catch (error) {
-    console.error(`Error reading ${filename}:`, error)
-    return []
-  }
-}
-
-// Helper function to write JSON file
-function writeDataFile(filename, data) {
-  try {
-    const filePath = path.join(process.cwd(), 'data', filename)
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2))
-    return true
-  } catch (error) {
-    console.error(`Error writing ${filename}:`, error)
-    return false
-  }
-}
-
-// Helper function to generate unique ID
-function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2)
-}
+const { query } = require('./postgres')
 
 // Posts functions
 async function getPosts() {
-  return posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map(post => ({
+  const result = await query(
+    'SELECT * FROM posts ORDER BY created_at DESC'
+  )
+  return result.map(post => ({
     ...post,
     id: post.id.toString()
   }))
@@ -104,29 +13,24 @@ async function getPosts() {
 
 async function createPost(postData) {
   const { title, content, authorId, username, displayName, imageUrl, videoUrl, isPinned } = postData
-  const newPost = {
-    id: Date.now().toString(),
-    title,
-    content,
-    authorId,
-    username,
-    displayName,
-    imageUrl,
-    videoUrl,
-    isPinned: isPinned || false,
-    createdAt: new Date()
-  }
-  posts.push(newPost)
-  savePosts(posts)
+  const result = await query(
+    `INSERT INTO posts (title, content, author_id, username, display_name, image_url, video_url, is_pinned, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     RETURNING *`,
+    [title, content, authorId, username, displayName, imageUrl, videoUrl, isPinned || false, new Date()]
+  )
   return {
-    ...newPost,
-    id: newPost.id.toString()
+    ...result[0],
+    id: result[0].id.toString()
   }
 }
 
 // Achievements functions
 async function getAchievements() {
-  return achievements.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map(achievement => ({
+  const result = await query(
+    'SELECT * FROM achievements ORDER BY created_at DESC'
+  )
+  return result.map(achievement => ({
     ...achievement,
     id: achievement.id.toString()
   }))
@@ -134,22 +38,15 @@ async function getAchievements() {
 
 async function createAchievement(achievementData) {
   const { title, description, iconUrl, imageUrl, videoUrl, isFeatured, authorId } = achievementData
-  const newAchievement = {
-    id: Date.now().toString(),
-    title,
-    description,
-    iconUrl,
-    imageUrl,
-    videoUrl,
-    isFeatured: isFeatured || false,
-    authorId,
-    createdAt: new Date()
-  }
-  achievements.push(newAchievement)
-  saveAchievements(achievements)
+  const result = await query(
+    `INSERT INTO achievements (title, description, icon_url, image_url, video_url, is_featured, author_id, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+     RETURNING *`,
+    [title, description, iconUrl, imageUrl, videoUrl, isFeatured || false, authorId, new Date()]
+  )
   return {
-    ...newAchievement,
-    id: newAchievement.id.toString()
+    ...result[0],
+    id: result[0].id.toString()
   }
 }
 
