@@ -67,7 +67,7 @@ export default function RegisterPage() {
     setError('')
 
     if (formData.password !== formData.confirmPassword) {
-      setError(t('error'))
+      setError(t('passwordsDoNotMatch') || 'Passwords do not match')
       return
     }
 
@@ -83,7 +83,7 @@ export default function RegisterPage() {
       })
       router.push('/')
     } catch (err) {
-      setError(t('error'))
+      setError(err.message || t('error') || 'Registration failed')
     } finally {
       setLoading(false)
     }
