@@ -1,9 +1,6 @@
+const { query } = require('./postgres')
 const fs = require('fs')
 const path = require('path')
-
-// In-memory storage
-let posts = []
-let achievements = []
 
 // Helper function to generate unique ID
 function generateId() {
@@ -39,7 +36,10 @@ function writeDataFile(filename, data) {
 
 // Posts functions
 async function getPosts() {
-  return posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map(post => ({
+  const result = await query(
+    'SELECT * FROM posts ORDER BY created_at DESC'
+  )
+  return result.map(post => ({
     ...post,
     id: post.id.toString()
   }))
@@ -47,28 +47,24 @@ async function getPosts() {
 
 async function createPost(postData) {
   const { title, content, authorId, username, displayName, imageUrl, videoUrl, isPinned } = postData
-  const newPost = {
-    id: Date.now().toString(),
-    title,
-    content,
-    authorId,
-    username,
-    displayName,
-    imageUrl,
-    videoUrl,
-    isPinned: isPinned || false,
-    createdAt: new Date()
-  }
-  posts.push(newPost)
+  const result = await query(
+    `INSERT INTO posts (title, content, author_id, username, display_name, image_url, video_url, is_pinned, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     RETURNING *`,
+    [title, content, authorId, username, displayName, imageUrl, videoUrl, isPinned || false, new Date()]
+  )
   return {
-    ...newPost,
-    id: newPost.id.toString()
+    ...result[0],
+    id: result[0].id.toString()
   }
 }
 
 // Achievements functions
 async function getAchievements() {
-  return achievements.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map(achievement => ({
+  const result = await query(
+    'SELECT * FROM achievements ORDER BY created_at DESC'
+  )
+  return result.map(achievement => ({
     ...achievement,
     id: achievement.id.toString()
   }))
@@ -76,21 +72,15 @@ async function getAchievements() {
 
 async function createAchievement(achievementData) {
   const { title, description, iconUrl, imageUrl, videoUrl, isFeatured, authorId } = achievementData
-  const newAchievement = {
-    id: Date.now().toString(),
-    title,
-    description,
-    iconUrl,
-    imageUrl,
-    videoUrl,
-    isFeatured: isFeatured || false,
-    authorId,
-    createdAt: new Date()
-  }
-  achievements.push(newAchievement)
+  const result = await query(
+    `INSERT INTO achievements (title, description, icon_url, image_url, video_url, is_featured, author_id, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+     RETURNING *`,
+    [title, description, iconUrl, imageUrl, videoUrl, isFeatured || false, authorId, new Date()]
+  )
   return {
-    ...newAchievement,
-    id: newAchievement.id.toString()
+    ...result[0],
+    id: result[0].id.toString()
   }
 }
 
