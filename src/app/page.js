@@ -372,6 +372,15 @@ export default function HomePage() {
           </div>
         </div>
       )}
+
+      {/* Copyright Footer */}
+      <div className="mt-8 bg-gray-100 dark:bg-gray-800 rounded-xl p-6 text-center text-sm text-gray-600 dark:text-gray-400">
+        <p className="font-semibold text-gray-800 dark:text-gray-300 mb-4">© 2026 Qilin Team All Rights Reserved</p>
+        <p className="mb-2">All rights reserved to Qilin Team</p>
+        <p className="mb-2">All ideas designs projects and content displayed on this website are the exclusive property of Qilin Team and are protected under intellectual property and copyright laws</p>
+        <p className="mb-2">Any copying reuse modification or republication of any part of this content without prior written permission from the team is strictly prohibited</p>
+        <p>Any unauthorized use will be regarded as an infringement of intellectual property rights and Qilin Team reserves the full right to take appropriate legal action to protect its work and content</p>
+      </div>
     </div>
   )
 }
