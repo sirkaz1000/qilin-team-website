@@ -23,7 +23,7 @@ export async function GET(request) {
     }
 
     // Return user data without password
-    const { passwordHash: _, ...userWithoutPassword } = user
+    const { password_hash: _, ...userWithoutPassword } = user
 
     return Response.json(userWithoutPassword)
   } catch (error) {
