@@ -355,11 +355,11 @@ export default function AchievementsPage() {
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-bold text-qilin-blue mb-4">{t('create')} Achievement</h3>
+            <h3 className="text-xl font-bold text-qilin-blue mb-4">{t('createAchievement')}</h3>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Title
+                  {t('title')}
                 </label>
                 <input
                   type="text"
@@ -370,7 +370,7 @@ export default function AchievementsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Description
+                  {t('description')}
                 </label>
                 <textarea
                   value={newAchievement.description}
@@ -381,7 +381,7 @@ export default function AchievementsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Icon
+                  {t('icon')}
                 </label>
                 <div className="relative">
                   <input
@@ -395,7 +395,7 @@ export default function AchievementsPage() {
                     htmlFor="icon-upload"
                     className="w-full px-4 py-2 bg-qilin-blue text-white rounded-lg hover:bg-qilin-dark transition-colors cursor-pointer text-center block"
                   >
-                    {iconFile ? iconFile.name : 'Choose Icon'}
+                    {iconFile ? iconFile.name : t('chooseIcon')}
                   </label>
                 </div>
                 {uploading && (
@@ -409,7 +409,7 @@ export default function AchievementsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Image
+                  {t('image')}
                 </label>
                 <div className="relative">
                   <input
@@ -423,7 +423,7 @@ export default function AchievementsPage() {
                     htmlFor="image-upload"
                     className="w-full px-4 py-2 bg-qilin-blue text-white rounded-lg hover:bg-qilin-dark transition-colors cursor-pointer text-center block"
                   >
-                    {imageFile ? imageFile.name : 'Choose Image'}
+                    {imageFile ? imageFile.name : t('chooseImage')}
                   </label>
                 </div>
                 {imageFile && (
@@ -434,7 +434,7 @@ export default function AchievementsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Video
+                  {t('video')}
                 </label>
                 <div className="relative">
                   <input
@@ -448,7 +448,7 @@ export default function AchievementsPage() {
                     htmlFor="video-upload"
                     className="w-full px-4 py-2 bg-qilin-blue text-white rounded-lg hover:bg-qilin-dark transition-colors cursor-pointer text-center block"
                   >
-                    {videoFile ? videoFile.name : 'Choose Video'}
+                    {videoFile ? videoFile.name : t('chooseVideo')}
                   </label>
                 </div>
                 {videoFile && (
@@ -489,11 +489,11 @@ export default function AchievementsPage() {
       {showEditModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-bold text-qilin-blue mb-4">Edit Achievement</h3>
+            <h3 className="text-xl font-bold text-qilin-blue mb-4">{t('editAchievement')}</h3>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Title
+                  {t('title')}
                 </label>
                 <input
                   type="text"
@@ -504,7 +504,7 @@ export default function AchievementsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Description
+                  {t('description')}
                 </label>
                 <textarea
                   value={newAchievement.description}
@@ -515,7 +515,7 @@ export default function AchievementsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Icon
+                  {t('icon')}
                 </label>
                 <div className="relative">
                   <input
@@ -529,7 +529,7 @@ export default function AchievementsPage() {
                     htmlFor="icon-upload-edit"
                     className="w-full px-4 py-2 bg-qilin-blue text-white rounded-lg hover:bg-qilin-dark transition-colors cursor-pointer text-center block"
                   >
-                    {iconFile ? iconFile.name : (iconUrl ? 'Change Icon' : 'Choose Icon')}
+                    {iconFile ? iconFile.name : (iconUrl ? t('chooseIcon') : t('chooseIcon'))}
                   </label>
                 </div>
                 {uploading && (
@@ -543,7 +543,7 @@ export default function AchievementsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Image
+                  {t('image')}
                 </label>
                 <div className="relative">
                   <input
@@ -557,7 +557,7 @@ export default function AchievementsPage() {
                     htmlFor="image-upload-edit"
                     className="w-full px-4 py-2 bg-qilin-blue text-white rounded-lg hover:bg-qilin-dark transition-colors cursor-pointer text-center block"
                   >
-                    {imageFile ? imageFile.name : (imageUrl ? 'Change Image' : 'Choose Image')}
+                    {imageFile ? imageFile.name : (imageUrl ? t('chooseImage') : t('chooseImage'))}
                   </label>
                 </div>
                 {imageFile && (
@@ -568,7 +568,7 @@ export default function AchievementsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Video
+                  {t('video')}
                 </label>
                 <div className="relative">
                   <input
@@ -582,7 +582,7 @@ export default function AchievementsPage() {
                     htmlFor="video-upload-edit"
                     className="w-full px-4 py-2 bg-qilin-blue text-white rounded-lg hover:bg-qilin-dark transition-colors cursor-pointer text-center block"
                   >
-                    {videoFile ? videoFile.name : (videoUrl ? 'Change Video' : 'Choose Video')}
+                    {videoFile ? videoFile.name : (videoUrl ? t('chooseVideo') : t('chooseVideo'))}
                   </label>
                 </div>
                 {videoFile && (

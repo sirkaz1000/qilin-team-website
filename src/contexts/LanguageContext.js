@@ -129,6 +129,19 @@ const translations = {
     copyrightProhibition: 'يُمنع منعاً باتاً أي نسخ أو إعادة استخدام أو تعديل أو إعادة نشر أي جزء من هذا المحتوى دون الحصول على إذن كتابي مسبق من الفريق',
     copyrightLegal: 'سيتم اعتبار أي استخدام غير مصرح به انتهاكاً لحقوق الملكية الفكرية، ويحتفظ فريق Qilin بالحق الكامل في اتخاذ الإجراءات القانونية المناسبة لحماية أعماله ومحتواه',
     
+    // Achievement Form
+    achievement: 'إنجاز',
+    title: 'العنوان',
+    description: 'الوصف',
+    icon: 'الأيقونة',
+    image: 'الصورة',
+    video: 'الفيديو',
+    chooseIcon: 'اختر أيقونة',
+    chooseImage: 'اختر صورة',
+    chooseVideo: 'اختر فيديو',
+    editAchievement: 'تعديل الإنجاز',
+    createAchievement: 'إنشاء إنجاز',
+    
     // Store
     store: 'المتجر',
     services: 'الخدمات',
@@ -326,6 +339,19 @@ const translations = {
     copyrightText: 'All ideas designs projects and content displayed on this website are the exclusive property of Qilin Team and are protected under intellectual property and copyright laws',
     copyrightProhibition: 'Any copying reuse modification or republication of any part of this content without prior written permission from the team is strictly prohibited',
     copyrightLegal: 'Any unauthorized use will be regarded as an infringement of intellectual property rights and Qilin Team reserves the full right to take appropriate legal action to protect its work and content',
+    
+    // Achievement Form
+    achievement: 'Achievement',
+    title: 'Title',
+    description: 'Description',
+    icon: 'Icon',
+    image: 'Image',
+    video: 'Video',
+    chooseIcon: 'Choose Icon',
+    chooseImage: 'Choose Image',
+    chooseVideo: 'Choose Video',
+    editAchievement: 'Edit Achievement',
+    createAchievement: 'Create Achievement',
     
     // Store
     store: 'Store',
