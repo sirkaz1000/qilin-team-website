@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { HelpCircle } from 'lucide-react'
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -205,6 +206,16 @@ export default function RegisterPage() {
               className="text-sm text-qilin-blue hover:text-qilin-dark transition-colors"
             >
               {t('login')}
+            </Link>
+          </div>
+
+          <div className="text-center mt-2">
+            <Link
+              href="/faq-auth"
+              className="text-sm text-gray-600 dark:text-gray-400 hover:text-qilin-blue transition-colors flex items-center justify-center"
+            >
+              <HelpCircle className="w-4 h-4 mr-1" />
+              {t('faq')}
             </Link>
           </div>
         </form>

@@ -180,7 +180,7 @@ export default function LoginPage() {
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('support')}</span>
           </button>
           <Link
-            href="/faq"
+            href="/faq-auth"
             className="flex items-center space-x-2 px-4 py-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           >
             <HelpCircle className="w-4 h-4 text-qilin-blue" />
