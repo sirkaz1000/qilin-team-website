@@ -1,7 +1,4 @@
 const { verifyToken } = require('@/lib/auth-simple')
-const { writeFile, mkdir } = require('fs/promises')
-const { join } = require('path')
-const crypto = require('crypto')
 
 export async function POST(request) {
   try {
@@ -37,27 +34,15 @@ export async function POST(request) {
       return Response.json({ error: `File too large (max ${isVideo ? '50MB' : '5MB'})` }, { status: 400 })
     }
 
-    // Generate unique filename
-    const ext = file.name.split('.').pop()
-    const filename = `${crypto.randomUUID()}.${ext}`
-    
-    // Ensure uploads directory exists
-    const uploadsDir = join(process.cwd(), 'public', 'uploads')
-    try {
-      await mkdir(uploadsDir, { recursive: true })
-    } catch (error) {
-      // Directory might already exist
-    }
-
-    // Save file
+    // Convert file to Base64
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
-    const filepath = join(uploadsDir, filename)
-    await writeFile(filepath, buffer)
+    const base64 = buffer.toString('base64')
+    
+    // Create data URL
+    const dataUrl = `data:${file.type};base64,${base64}`
 
-    // Return URL
-    const url = `/uploads/${filename}`
-    return Response.json({ url })
+    return Response.json({ url: dataUrl })
   } catch (error) {
     console.error('Error uploading file:', error)
     return Response.json({ error: 'Failed to upload file' }, { status: 500 })
