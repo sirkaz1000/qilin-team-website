@@ -7,7 +7,7 @@ import { useLanguage } from '@/contexts/LanguageContext'
 import { Star, ShoppingCart, Code, Palette, Cpu } from 'lucide-react'
 
 export default function StorePage() {
-  const { user, loading } = useAuth()
+  const { user, loading, isAdmin } = useAuth()
   const router = useRouter()
   const { t } = useLanguage()
   const [items, setItems] = useState([])
@@ -218,7 +218,7 @@ export default function StorePage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-qilin-blue">{t('store')}</h1>
-        {user?.role === 'admin' && (
+        {isAdmin && (
           <button
             onClick={() => setShowAddModal(true)}
             className="px-4 py-2 bg-qilin-blue text-white rounded-lg hover:bg-qilin-dark transition-colors flex items-center"

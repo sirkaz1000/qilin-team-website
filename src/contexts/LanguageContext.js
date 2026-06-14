@@ -165,6 +165,7 @@ const translations = {
     orderHistory: 'سجل الطلبات',
     all: 'الكل',
     ourServices: 'خدماتنا',
+    addItem: 'إضافة عنصر',
     webDevelopment: 'تطوير الويب',
     webDevelopmentDesc: 'تطبيقات ومواقع ويب مخصصة حسب احتياجاتك.',
     uiuxDesign: 'تصميم UI/UX',
