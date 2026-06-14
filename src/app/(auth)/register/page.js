@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { HelpCircle } from 'lucide-react'
+import { useTheme } from '@/contexts/ThemeContext'
+import { HelpCircle, LifeBuoy, Globe, Sun, Moon } from 'lucide-react'
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -21,7 +22,8 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const { register } = useAuth()
-  const { t } = useLanguage()
+  const { t, language, toggleLanguage } = useLanguage()
+  const { theme, toggleTheme } = useTheme()
 
   const handleChange = (e) => {
     setFormData({
@@ -92,7 +94,26 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-silver-100 to-silver-300 dark:from-gray-900 dark:to-gray-800 px-4 py-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-silver-100 to-silver-300 dark:from-gray-900 dark:to-gray-800 px-4 py-8 relative">
+      {/* Top Left Controls */}
+      <div className="absolute top-4 left-4 flex space-x-2">
+        <button
+          onClick={toggleTheme}
+          className="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+        >
+          {theme === 'dark' ? <Sun className="w-5 h-5 text-gray-700 dark:text-gray-300" /> : <Moon className="w-5 h-5 text-gray-700 dark:text-gray-300" />}
+        </button>
+        <button
+          onClick={toggleLanguage}
+          className="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center space-x-1"
+          title="Change Language"
+        >
+          <Globe className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{language === 'ar' ? 'EN' : 'AR'}</span>
+        </button>
+      </div>
+
       <div className="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl">
         <div className="text-center">
           <h2 className="text-3xl font-bold text-qilin-blue">{t('register')}</h2>
@@ -215,17 +236,25 @@ export default function RegisterPage() {
               {t('login')}
             </Link>
           </div>
-
-          <div className="text-center mt-2">
-            <Link
-              href="/faq-auth"
-              className="text-sm text-gray-600 dark:text-gray-400 hover:text-qilin-blue transition-colors flex items-center justify-center"
-            >
-              <HelpCircle className="w-4 h-4 mr-1" />
-              {t('faq')}
-            </Link>
-          </div>
         </form>
+      </div>
+
+      {/* Bottom Left Buttons */}
+      <div className="absolute bottom-4 left-4 flex flex-col space-y-2">
+        <Link
+          href="/support"
+          className="flex items-center space-x-2 px-4 py-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        >
+          <LifeBuoy className="w-4 h-4 text-qilin-blue" />
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('support')}</span>
+        </Link>
+        <Link
+          href="/faq-auth"
+          className="flex items-center space-x-2 px-4 py-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        >
+          <HelpCircle className="w-4 h-4 text-qilin-blue" />
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('faq')}</span>
+        </Link>
       </div>
     </div>
   )
