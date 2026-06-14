@@ -52,7 +52,11 @@ export default function AdminPage() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('/api/users')
+      const response = await fetch('/api/users', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      })
       if (response.ok) {
         const data = await response.json()
         setUsers(data)
