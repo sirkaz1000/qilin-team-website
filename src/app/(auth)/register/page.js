@@ -77,7 +77,14 @@ export default function RegisterPage() {
       })
       router.push('/')
     } catch (err) {
-      setError(err.message || t('error') || 'Registration failed')
+      // Translate error codes
+      const errorMap = {
+        requiredFields: t('requiredFields'),
+        invalidEmail: t('invalidEmail'),
+        userAlreadyExists: t('userAlreadyExists'),
+        registrationFailed: t('registrationFailed'),
+      }
+      setError(errorMap[err.message] || err.message || t('error'))
     } finally {
       setLoading(false)
     }

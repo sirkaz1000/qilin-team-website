@@ -22,13 +22,13 @@ export async function POST(request) {
     // Basic validation
     if (!email || !password || !displayName || !username) {
       console.log('Validation failed: missing required fields')
-      return Response.json({ error: 'All fields are required' }, { status: 400 })
+      return Response.json({ error: 'requiredFields' }, { status: 400 })
     }
 
     // Validate email format
     if (!validateEmail(email)) {
       console.log('Validation failed: invalid email format')
-      return Response.json({ error: 'Invalid email format' }, { status: 400 })
+      return Response.json({ error: 'invalidEmail' }, { status: 400 })
     }
 
     // Sanitize inputs
@@ -59,7 +59,12 @@ export async function POST(request) {
     console.error('Error:', error)
     console.error('Error message:', error.message)
     console.error('Error stack:', error.stack)
-    // Don't expose detailed error messages
-    return Response.json({ error: error.message || 'Registration failed' }, { status: 400 })
+    
+    // Return specific error codes
+    if (error.message === 'User already exists') {
+      return Response.json({ error: 'userAlreadyExists' }, { status: 400 })
+    }
+    
+    return Response.json({ error: 'registrationFailed' }, { status: 400 })
   }
 }

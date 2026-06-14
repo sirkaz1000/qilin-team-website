@@ -31,7 +31,13 @@ export default function LoginPage() {
       await login(username, password)
       router.push('/')
     } catch (err) {
-      setError(err.message || t('error') || 'Login failed')
+      // Translate error codes
+      const errorMap = {
+        requiredFields: t('requiredFields'),
+        invalidCredentials: t('invalidCredentials'),
+        loginFailed: t('loginFailed'),
+      }
+      setError(errorMap[err.message] || err.message || t('error'))
     } finally {
       setLoading(false)
     }

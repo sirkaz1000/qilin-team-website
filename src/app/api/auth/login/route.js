@@ -18,7 +18,7 @@ export async function POST(request) {
     // Validation
     if (!username || !password) {
       console.log('Validation failed: missing username or password')
-      return Response.json({ error: 'Username and password are required' }, { status: 400 })
+      return Response.json({ error: 'requiredFields' }, { status: 400 })
     }
 
     // Sanitize inputs
@@ -45,7 +45,12 @@ export async function POST(request) {
     console.error('Error:', error)
     console.error('Error message:', error.message)
     console.error('Error stack:', error.stack)
-    // Don't expose detailed error messages
-    return Response.json({ error: error.message || 'Login failed' }, { status: 401 })
+    
+    // Return specific error codes
+    if (error.message === 'Invalid credentials') {
+      return Response.json({ error: 'invalidCredentials' }, { status: 401 })
+    }
+    
+    return Response.json({ error: 'loginFailed' }, { status: 401 })
   }
 }

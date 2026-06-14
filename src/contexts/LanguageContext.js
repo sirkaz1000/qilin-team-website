@@ -47,6 +47,15 @@ const translations = {
     error: 'حدث خطأ',
     success: 'تم بنجاح',
     
+    // Error Messages
+    userAlreadyExists: 'اسم المستخدم أو البريد الإلكتروني موجود بالفعل',
+    invalidCredentials: 'اسم المستخدم أو كلمة المرور غير صحيحة',
+    userNotFound: 'المستخدم غير موجود',
+    invalidEmail: 'البريد الإلكتروني غير صحيح',
+    requiredFields: 'جميع الحقول مطلوبة',
+    loginFailed: 'فشل تسجيل الدخول',
+    registrationFailed: 'فشل إنشاء الحساب',
+    
     // Support
     support: 'الدعم الفني',
     contactSupport: 'اتصل بالدعم الفني',
@@ -230,6 +239,15 @@ const translations = {
     loading: 'Loading...',
     error: 'An error occurred',
     success: 'Success',
+    
+    // Error Messages
+    userAlreadyExists: 'Username or email already exists',
+    invalidCredentials: 'Invalid username or password',
+    userNotFound: 'User not found',
+    invalidEmail: 'Invalid email format',
+    requiredFields: 'All fields are required',
+    loginFailed: 'Login failed',
+    registrationFailed: 'Registration failed',
     
     // Support
     support: 'Technical Support',
