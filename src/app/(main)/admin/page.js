@@ -251,7 +251,7 @@ export default function AdminPage() {
               <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-8 text-center">
                 <HelpCircle className="w-12 h-12 text-qilin-blue mx-auto mb-4" />
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  Click "Manage FAQs" to create and edit frequently asked questions.
+                  Click &quot;Manage FAQs&quot; to create and edit frequently asked questions.
                 </p>
                 <button
                   onClick={() => router.push('/admin/faqs')}
