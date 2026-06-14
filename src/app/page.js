@@ -160,31 +160,27 @@ export default function HomePage() {
         </p>
       </div>
 
-      {/* Core and Only Members */}
+      {/* Team Founder */}
       <div className="bg-gradient-to-r from-qilin-blue to-qilin-light rounded-xl p-6 shadow-lg mb-8 text-white">
-        <h2 className="text-2xl font-bold mb-4">{t('coreAndOnlyMembers')}</h2>
-        <h3 className="text-xl font-semibold mb-4">{t('teamFounders')}</h3>
-        <div className="grid md:grid-cols-2 gap-4">
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-            <div className="flex items-center space-x-3">
+        <h2 className="text-2xl font-bold mb-4">{t('teamFounder')}</h2>
+        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+          <div className="flex items-center space-x-3">
+            {user.avatarUrl ? (
+              <img
+                src={user.avatarUrl}
+                alt={user.displayName}
+                className="w-12 h-12 rounded-full object-cover"
+              />
+            ) : (
               <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
-                <span className="text-qilin-blue font-bold text-xl">K</span>
+                <span className="text-qilin-blue font-bold text-xl">
+                  {user.displayName.charAt(0).toUpperCase()}
+                </span>
               </div>
-              <div>
-                <h4 className="font-bold text-lg">{t('sirKaz')}</h4>
-                <p className="text-sm opacity-90">{t('teamFounders')}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
-                <span className="text-qilin-blue font-bold text-xl">M</span>
-              </div>
-              <div>
-                <h4 className="font-bold text-lg">{t('sirMax')}</h4>
-                <p className="text-sm opacity-90">{t('teamFounders')}</p>
-              </div>
+            )}
+            <div>
+              <h4 className="font-bold text-lg">{user.displayName}</h4>
+              <p className="text-sm opacity-90">{t('teamFounder')}</p>
             </div>
           </div>
         </div>

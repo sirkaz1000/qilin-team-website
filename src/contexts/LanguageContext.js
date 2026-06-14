@@ -83,10 +83,7 @@ const translations = {
     comments: 'التعليقات',
     writeComment: 'اكتب تعليقاً...',
     settings: 'الإعدادات',
-    coreAndOnlyMembers: 'الأعضاء الأساسيين والوحيدين',
-    teamFounders: 'مؤسسي الفريق',
-    sirKaz: 'Sir Kaz',
-    sirMax: 'Sir Max',
+    teamFounder: 'مؤسس الفريق',
     
     // Admin
     adminDashboard: 'لوحة التحكم',
@@ -284,10 +281,7 @@ const translations = {
     comments: 'Comments',
     writeComment: 'Write a comment...',
     settings: 'Settings',
-    coreAndOnlyMembers: 'Core and Only Members',
-    teamFounders: 'Team Founders',
-    sirKaz: 'Sir Kaz',
-    sirMax: 'Sir Max',
+    teamFounder: 'Team Founder',
     
     // Admin
     adminDashboard: 'Admin Dashboard',
