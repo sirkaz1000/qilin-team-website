@@ -180,7 +180,6 @@ export default function HomePage() {
             )}
             <div>
               <h4 className="font-bold text-lg">{user.displayName}</h4>
-              <p className="text-sm opacity-90">{t('teamFounder')}</p>
             </div>
           </div>
         </div>
