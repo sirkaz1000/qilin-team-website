@@ -6,61 +6,43 @@ import { HelpCircle, ChevronDown, ChevronUp, MessageSquare, Globe, Sun, Moon } f
 
 export default function FAQAuthPage() {
   const { t, language, toggleLanguage } = useLanguage()
+  const [faqs, setFaqs] = useState([])
   const [openIndex, setOpenIndex] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [loading, setLoading] = useState(true)
 
-  // Auth-specific FAQs
-  const authFAQs = [
-    {
-      id: 1,
-      questionAr: 'كيف أنشئ حساب جديد؟',
-      questionEn: 'How do I create a new account?',
-      answerAr: 'يمكنك إنشاء حساب جديد بالضغط على زر "إنشاء حساب" في صفحة تسجيل الدخول. ستحتاج إلى إدخال اسم المستخدم، البريد الإلكتروني، كلمة المرور، والاسم المعروض.',
-      answerEn: 'You can create a new account by clicking the "Register" button on the login page. You will need to enter your username, email, password, and display name.'
-    },
-    {
-      id: 2,
-      questionAr: 'كيف أسجل الدخول إلى حسابي؟',
-      questionEn: 'How do I log in to my account?',
-      answerAr: 'أدخل اسم المستخدم وكلمة المرور في صفحة تسجيل الدخول واضغط على زر "تسجيل الدخول". إذا نسيت كلمة المرور، يمكنك طلب إعادة تعيينها.',
-      answerEn: 'Enter your username and password on the login page and click the "Login" button. If you forgot your password, you can request a password reset.'
-    },
-    {
-      id: 3,
-      questionAr: 'ماذا أفعل إذا نسيت كلمة المرور؟',
-      questionEn: 'What should I do if I forgot my password?',
-      answerAr: 'إذا نسيت كلمة المرور، يمكنك طلب إعادة تعيينها من خلال زر "نسيت كلمة المرور" في صفحة تسجيل الدخول. سيتم إرسال رابط إلى بريدك الإلكتروني لإعادة تعيين كلمة المرور.',
-      answerEn: 'If you forgot your password, you can request a password reset through the "Forgot Password" button on the login page. A link will be sent to your email to reset your password.'
-    },
-    {
-      id: 4,
-      questionAr: 'ما هي متطلبات كلمة المرور؟',
-      questionEn: 'What are the password requirements?',
-      answerAr: 'يجب أن تكون كلمة المرور قوية وآمنة. يُنصح باستخدام مزيج من الأحرف الكبيرة والصغيرة والأرقام والرموز الخاصة.',
-      answerEn: 'The password must be strong and secure. It is recommended to use a mix of uppercase and lowercase letters, numbers, and special characters.'
-    },
-    {
-      id: 5,
-      questionAr: 'هل يمكنني تغيير اسم المستخدم؟',
-      questionEn: 'Can I change my username?',
-      answerAr: 'اسم المستخدم فريد ولا يمكن تغييره بعد إنشاء الحساب. إذا كنت تريد استخدام اسم مستخدم مختلف، ستحتاج إلى إنشاء حساب جديد.',
-      answerEn: 'The username is unique and cannot be changed after the account is created. If you want to use a different username, you will need to create a new account.'
-    },
-    {
-      id: 6,
-      questionAr: 'كيف يمكنني حذف حسابي؟',
-      questionEn: 'How can I delete my account?',
-      answerAr: 'لحذف حسابك، اتصل بالدعم الفني من خلال نموذج الدعم في صفحة الأسئلة الشائعة. سيتم معالجة طلبك في أقرب وقت ممكن.',
-      answerEn: 'To delete your account, contact technical support through the support form on the FAQ page. Your request will be processed as soon as possible.'
+  useEffect(() => {
+    fetchFAQs()
+  }, [])
+
+  const fetchFAQs = async () => {
+    try {
+      const response = await fetch('/api/faq?type=auth')
+      if (response.ok) {
+        const data = await response.json()
+        setFaqs(data)
+      }
+    } catch (error) {
+      console.error('Error fetching FAQs:', error)
+    } finally {
+      setLoading(false)
     }
-  ]
+  }
 
-  const filteredFAQs = authFAQs.filter(faq => {
+  const filteredFAQs = faqs.filter(faq => {
     const question = language === 'ar' ? faq.questionAr : faq.questionEn
     const answer = language === 'ar' ? faq.answerAr : faq.answerEn
     const query = searchQuery.toLowerCase()
     return question.toLowerCase().includes(query) || answer.toLowerCase().includes(query)
   })
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-silver-100 to-silver-300 dark:from-gray-900 dark:to-gray-800 px-4">
+        <div className="text-xl text-gray-600 dark:text-gray-400">{t('loading')}</div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-silver-100 to-silver-300 dark:from-gray-900 dark:to-gray-800 px-4 py-8 relative">

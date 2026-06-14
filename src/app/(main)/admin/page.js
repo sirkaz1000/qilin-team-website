@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { Users, MessageSquare, ShoppingCart, LifeBuoy, BarChart3, Bell, Settings, Shield, UserPlus, UserMinus, Edit } from 'lucide-react'
+import { Users, MessageSquare, ShoppingCart, LifeBuoy, BarChart3, Bell, Settings, Shield, UserPlus, UserMinus, Edit, HelpCircle } from 'lucide-react'
 
 export default function AdminPage() {
   const { user, loading, isAdmin } = useAuth()
@@ -127,6 +127,7 @@ export default function AdminPage() {
     { id: 'posts', label: t('posts'), icon: MessageSquare },
     { id: 'orders', label: t('orders'), icon: ShoppingCart },
     { id: 'tickets', label: t('tickets'), icon: LifeBuoy },
+    { id: 'faqs', label: 'FAQs', icon: HelpCircle },
     { id: 'notifications', label: t('notifications'), icon: Bell },
     { id: 'settings', label: t('settings'), icon: Settings },
   ]
@@ -228,6 +229,36 @@ export default function AdminPage() {
                     <p className="text-sm text-gray-600 dark:text-gray-400">1 hour ago</p>
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'faqs' && (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Manage FAQs</h2>
+                <button
+                  onClick={() => router.push('/admin/faqs')}
+                  className="flex items-center space-x-2 px-4 py-2 bg-qilin-blue text-white rounded-lg hover:bg-qilin-dark transition-colors"
+                >
+                  <HelpCircle className="w-4 h-4" />
+                  <span>Manage FAQs</span>
+                </button>
+              </div>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                Create and manage frequently asked questions for login/register and general site pages.
+              </p>
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-8 text-center">
+                <HelpCircle className="w-12 h-12 text-qilin-blue mx-auto mb-4" />
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  Click "Manage FAQs" to create and edit frequently asked questions.
+                </p>
+                <button
+                  onClick={() => router.push('/admin/faqs')}
+                  className="px-4 py-2 bg-qilin-blue text-white rounded-lg hover:bg-qilin-dark transition-colors"
+                >
+                  Go to FAQ Management
+                </button>
               </div>
             </div>
           )}

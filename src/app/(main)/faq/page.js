@@ -24,7 +24,7 @@ export default function FAQPage() {
 
   const fetchFAQs = async () => {
     try {
-      const response = await fetch('/api/faq')
+      const response = await fetch('/api/faq?type=general')
       if (response.ok) {
         const data = await response.json()
         setFaqs(data)
