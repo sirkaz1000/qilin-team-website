@@ -29,6 +29,8 @@ export default function StorePage() {
     type: 'SERVICE',
     imageUrl: ''
   })
+  const [imageFile, setImageFile] = useState(null)
+  const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
     if (!loading && !user) {
@@ -95,6 +97,39 @@ export default function StorePage() {
     }
   }
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    setUploading(true)
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (showAddModal) {
+          setNewItem({ ...newItem, imageUrl: data.url })
+        } else if (showEditModal) {
+          setEditingItem({ ...editingItem, imageUrl: data.url })
+        }
+        setImageFile(file)
+      } else {
+        alert('Failed to upload image')
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error)
+      alert('Failed to upload image')
+    } finally {
+      setUploading(false)
+    }
+  }
+
   const handleAddItem = async () => {
     if (!newItem.title || !newItem.description || !newItem.price) {
       alert('Please fill in all required fields')
@@ -123,6 +158,7 @@ export default function StorePage() {
           type: 'SERVICE',
           imageUrl: ''
         })
+        setImageFile(null)
         fetchItems()
         alert('Item added successfully!')
       } else {
@@ -197,6 +233,7 @@ export default function StorePage() {
 
   const openEditModal = (item) => {
     setEditingItem({ ...item })
+    setImageFile(null)
     setShowEditModal(true)
   }
 
@@ -536,15 +573,31 @@ export default function StorePage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {t('imageUrl')} ({t('optional')})
+                  {t('image')}
                 </label>
-                <input
-                  type="text"
-                  value={newItem.imageUrl}
-                  onChange={(e) => setNewItem({ ...newItem, imageUrl: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-qilin-blue bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  placeholder="https://example.com/image.jpg"
-                />
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    id="image-upload"
+                  />
+                  <label
+                    htmlFor="image-upload"
+                    className="w-full px-4 py-2 bg-qilin-blue text-white rounded-lg hover:bg-qilin-dark transition-colors cursor-pointer text-center block"
+                  >
+                    {imageFile ? imageFile.name : t('chooseImage')}
+                  </label>
+                </div>
+                {uploading && (
+                  <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{t('loading')}</p>
+                )}
+                {imageFile && (
+                  <p className="mt-2 text-sm text-green-600 dark:text-green-400">
+                    {t('success')}: {imageFile.name}
+                  </p>
+                )}
               </div>
               <div className="flex space-x-2">
                 <button
@@ -563,6 +616,7 @@ export default function StorePage() {
                       type: 'SERVICE',
                       imageUrl: ''
                     })
+                    setImageFile(null)
                   }}
                   className="flex-1 px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-white rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
                 >
@@ -631,15 +685,31 @@ export default function StorePage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {t('imageUrl')} ({t('optional')})
+                  {t('image')}
                 </label>
-                <input
-                  type="text"
-                  value={editingItem.imageUrl}
-                  onChange={(e) => setEditingItem({ ...editingItem, imageUrl: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-qilin-blue bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  placeholder="https://example.com/image.jpg"
-                />
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    id="image-upload-edit"
+                  />
+                  <label
+                    htmlFor="image-upload-edit"
+                    className="w-full px-4 py-2 bg-qilin-blue text-white rounded-lg hover:bg-qilin-dark transition-colors cursor-pointer text-center block"
+                  >
+                    {imageFile ? imageFile.name : (editingItem.imageUrl ? t('chooseImage') : t('chooseImage'))}
+                  </label>
+                </div>
+                {uploading && (
+                  <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{t('loading')}</p>
+                )}
+                {imageFile && (
+                  <p className="mt-2 text-sm text-green-600 dark:text-green-400">
+                    {t('success')}: {imageFile.name}
+                  </p>
+                )}
               </div>
               <div className="flex space-x-2">
                 <button
@@ -652,6 +722,7 @@ export default function StorePage() {
                   onClick={() => {
                     setShowEditModal(false)
                     setEditingItem(null)
+                    setImageFile(null)
                   }}
                   className="flex-1 px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-white rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
                 >
