@@ -236,7 +236,7 @@ export default function PostsPage() {
             onClick={() => setShowCreateModal(true)}
             className="px-4 py-2 bg-qilin-blue text-white rounded-lg hover:bg-qilin-dark transition-colors"
           >
-            {t('create')} Post
+            {t('createPost')}
           </button>
         )}
       </div>
@@ -315,11 +315,11 @@ export default function PostsPage() {
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-bold text-qilin-blue mb-4">{t('create')} Post</h3>
+            <h3 className="text-xl font-bold text-qilin-blue mb-4">{t('createPost')}</h3>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Title
+                  {t('title')}
                 </label>
                 <input
                   type="text"
@@ -330,7 +330,7 @@ export default function PostsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Content
+                  {t('content')}
                 </label>
                 <textarea
                   value={newPost.content}
@@ -341,7 +341,7 @@ export default function PostsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Image
+                  {t('image')}
                 </label>
                 <div className="relative">
                   <input
@@ -355,7 +355,7 @@ export default function PostsPage() {
                     htmlFor="image-upload"
                     className="w-full px-4 py-2 bg-qilin-blue text-white rounded-lg hover:bg-qilin-dark transition-colors cursor-pointer text-center block"
                   >
-                    {imageFile ? imageFile.name : 'Choose Image'}
+                    {imageFile ? imageFile.name : t('chooseImage')}
                   </label>
                 </div>
                 {uploading && (
@@ -369,7 +369,7 @@ export default function PostsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Video
+                  {t('video')}
                 </label>
                 <div className="relative">
                   <input
@@ -383,7 +383,7 @@ export default function PostsPage() {
                     htmlFor="video-upload"
                     className="w-full px-4 py-2 bg-qilin-blue text-white rounded-lg hover:bg-qilin-dark transition-colors cursor-pointer text-center block"
                   >
-                    {videoFile ? videoFile.name : 'Choose Video'}
+                    {videoFile ? videoFile.name : t('chooseVideo')}
                   </label>
                 </div>
                 {videoFile && (
@@ -422,11 +422,11 @@ export default function PostsPage() {
       {showEditModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-bold text-qilin-blue mb-4">Edit Post</h3>
+            <h3 className="text-xl font-bold text-qilin-blue mb-4">{t('editPost')}</h3>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Title
+                  {t('title')}
                 </label>
                 <input
                   type="text"
@@ -437,7 +437,7 @@ export default function PostsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Content
+                  {t('content')}
                 </label>
                 <textarea
                   value={newPost.content}
@@ -448,7 +448,7 @@ export default function PostsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Image
+                  {t('image')}
                 </label>
                 <div className="relative">
                   <input
@@ -462,7 +462,7 @@ export default function PostsPage() {
                     htmlFor="image-upload-edit"
                     className="w-full px-4 py-2 bg-qilin-blue text-white rounded-lg hover:bg-qilin-dark transition-colors cursor-pointer text-center block"
                   >
-                    {imageFile ? imageFile.name : (imageUrl ? 'Change Image' : 'Choose Image')}
+                    {imageFile ? imageFile.name : (imageUrl ? t('chooseImage') : t('chooseImage'))}
                   </label>
                 </div>
                 {uploading && (
@@ -476,7 +476,7 @@ export default function PostsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Video
+                  {t('video')}
                 </label>
                 <div className="relative">
                   <input
@@ -490,7 +490,7 @@ export default function PostsPage() {
                     htmlFor="video-upload-edit"
                     className="w-full px-4 py-2 bg-qilin-blue text-white rounded-lg hover:bg-qilin-dark transition-colors cursor-pointer text-center block"
                   >
-                    {videoFile ? videoFile.name : (videoUrl ? 'Change Video' : 'Choose Video')}
+                    {videoFile ? videoFile.name : (videoUrl ? t('chooseVideo') : t('chooseVideo'))}
                   </label>
                 </div>
                 {videoFile && (
@@ -504,7 +504,7 @@ export default function PostsPage() {
                   onClick={handleUpdatePost}
                   className="flex-1 px-4 py-2 bg-qilin-blue text-white rounded-lg hover:bg-qilin-dark transition-colors"
                 >
-                  Update
+                  {t('save')}
                 </button>
                 <button
                   onClick={() => {

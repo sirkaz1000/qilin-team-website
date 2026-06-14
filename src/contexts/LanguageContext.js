@@ -133,6 +133,7 @@ const translations = {
     achievement: 'إنجاز',
     title: 'العنوان',
     description: 'الوصف',
+    content: 'المحتوى',
     icon: 'الأيقونة',
     image: 'الصورة',
     video: 'الفيديو',
@@ -141,6 +142,11 @@ const translations = {
     chooseVideo: 'اختر فيديو',
     editAchievement: 'تعديل الإنجاز',
     createAchievement: 'إنشاء إنجاز',
+    
+    // Post Form
+    post: 'منشور',
+    createPost: 'إنشاء منشور',
+    editPost: 'تعديل منشور',
     
     // Store
     store: 'المتجر',
@@ -344,6 +350,7 @@ const translations = {
     achievement: 'Achievement',
     title: 'Title',
     description: 'Description',
+    content: 'Content',
     icon: 'Icon',
     image: 'Image',
     video: 'Video',
@@ -352,6 +359,11 @@ const translations = {
     chooseVideo: 'Choose Video',
     editAchievement: 'Edit Achievement',
     createAchievement: 'Create Achievement',
+    
+    // Post Form
+    post: 'Post',
+    createPost: 'Create Post',
+    editPost: 'Edit Post',
     
     // Store
     store: 'Store',
