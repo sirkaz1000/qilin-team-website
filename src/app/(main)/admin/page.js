@@ -63,7 +63,10 @@ export default function AdminPage() {
       })
       if (response.ok) {
         const data = await response.json()
+        console.log('Fetched users:', data)
         setUsers(data)
+      } else {
+        console.error('Failed to fetch users:', response.status)
       }
     } catch (error) {
       console.error('Error fetching users:', error)
