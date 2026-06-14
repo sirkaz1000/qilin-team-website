@@ -30,6 +30,7 @@ const translations = {
     skip: 'تخطي',
     optional: 'اختياري',
     chooseFile: 'اختر ملف',
+    chooseAvatar: 'اختر صورة رمزية',
     
     // Buttons
     submit: 'إرسال',
@@ -223,6 +224,7 @@ const translations = {
     skip: 'Skip',
     optional: 'optional',
     chooseFile: 'Choose File',
+    chooseAvatar: 'Choose Avatar',
     
     // Buttons
     submit: 'Submit',

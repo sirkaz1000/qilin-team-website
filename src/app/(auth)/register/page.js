@@ -172,17 +172,24 @@ export default function RegisterPage() {
             <label htmlFor="avatar" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('avatar')} ({t('skip')})
             </label>
-            <input
-              id="avatar"
-              name="avatar"
-              type="file"
-              accept="image/*"
-              onChange={handleAvatarChange}
-              className="appearance-none relative block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 placeholder-gray-500 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-qilin-blue focus:border-transparent bg-white dark:bg-gray-700"
-            />
-            {uploading && (
-              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{t('loading')}</p>
-            )}
+            <div className="relative">
+              <input
+                id="avatar"
+                name="avatar"
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarChange}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => document.getElementById('avatar').click()}
+                disabled={uploading}
+                className="w-full py-3 px-4 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-qilin-blue transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {uploading ? t('loading') : (avatarFile ? avatarFile.name : t('chooseAvatar'))}
+              </button>
+            </div>
             {avatarFile && (
               <p className="mt-2 text-sm text-green-600 dark:text-green-400">
                 {t('success')}: {avatarFile.name}
