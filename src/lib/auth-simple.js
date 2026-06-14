@@ -121,6 +121,25 @@ async function authenticateUser(username, password) {
   return userCopy
 }
 
+async function updateUserRole(userId, role) {
+  console.log('=== updateUserRole (PostgreSQL) ===')
+  console.log('Parameters:', { userId, role })
+  
+  const result = await query(
+    'UPDATE users SET role = $1 WHERE id = $2 RETURNING id, username, email, display_name, role, avatar_url, is_active, created_at',
+    [role, userId]
+  )
+  
+  if (result.length === 0) {
+    console.log('User not found for role update')
+    return null
+  }
+  
+  const user = toCamelCase(result[0])
+  console.log('User role updated successfully:', { id: user.id, username: user.username, role: user.role })
+  return user
+}
+
 module.exports = {
   hashPassword,
   comparePassword,
@@ -130,6 +149,7 @@ module.exports = {
   getUserByUsername,
   getUserById,
   authenticateUser,
+  updateUserRole,
   validatePasswordStrength: function(password) {
     const errors = []
     
