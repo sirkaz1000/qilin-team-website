@@ -273,7 +273,7 @@ export default function AchievementsPage() {
             onClick={() => setShowCreateModal(true)}
             className="px-4 py-2 bg-qilin-blue text-white rounded-lg hover:bg-qilin-dark transition-colors"
           >
-            {t('create')} Achievement
+            {t('createAchievement')}
           </button>
         )}
       </div>
@@ -326,23 +326,23 @@ export default function AchievementsPage() {
                         ? 'bg-yellow-500 text-white'
                         : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                     }`}
-                    title={achievement.isFeatured ? 'Unfeature' : 'Feature'}
+                    title={achievement.isFeatured ? t('unfeature') : t('feature')}
                   >
                     <Star className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleEditAchievement(achievement)}
                     className="px-2 py-1 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                    title="Edit"
+                    title={t('edit')}
                   >
-                    Edit
+                    {t('edit')}
                   </button>
                   <button
                     onClick={() => handleDeleteAchievement(achievement.id)}
                     className="px-2 py-1 text-sm bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                    title="Delete"
+                    title={t('delete')}
                   >
-                    Delete
+                    {t('delete')}
                   </button>
                 </div>
               )}
@@ -596,7 +596,7 @@ export default function AchievementsPage() {
                   onClick={handleUpdateAchievement}
                   className="flex-1 px-4 py-2 bg-qilin-blue text-white rounded-lg hover:bg-qilin-dark transition-colors"
                 >
-                  Update
+                  {t('save')}
                 </button>
                 <button
                   onClick={() => {

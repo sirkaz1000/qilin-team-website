@@ -148,6 +148,14 @@ const translations = {
     createPost: 'إنشاء منشور',
     editPost: 'تعديل منشور',
     
+    // Achievement Page
+    noAchievementsYet: 'لا توجد إنجازات بعد',
+    feature: 'تمييز',
+    unfeature: 'إلغاء التمييز',
+    edit: 'تعديل',
+    delete: 'حذف',
+    save: 'حفظ',
+    
     // Store
     store: 'المتجر',
     services: 'الخدمات',
@@ -364,6 +372,14 @@ const translations = {
     post: 'Post',
     createPost: 'Create Post',
     editPost: 'Edit Post',
+    
+    // Achievement Page
+    noAchievementsYet: 'No achievements yet',
+    feature: 'Feature',
+    unfeature: 'Unfeature',
+    edit: 'Edit',
+    delete: 'Delete',
+    save: 'Save',
     
     // Store
     store: 'Store',
