@@ -113,11 +113,19 @@ export default function Navbar() {
                   <LogOut className="w-5 h-5 text-gray-700 dark:text-gray-300" />
                 </button>
                 <div className="relative">
-                  <div className="w-8 h-8 bg-qilin-blue rounded-full flex items-center justify-center">
-                    <span className="text-white font-medium text-sm">
-                      {user.displayName.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
+                  {user.avatarUrl ? (
+                    <img
+                      src={user.avatarUrl}
+                      alt={user.displayName}
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 bg-qilin-blue rounded-full flex items-center justify-center">
+                      <span className="text-white font-medium text-sm">
+                        {user.displayName.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
                   {user.role === 'ADMIN' && (
                     <CheckCircle className="w-4 h-4 text-yellow-500 absolute -bottom-1 -right-1 bg-white dark:bg-gray-800 rounded-full" />
                   )}
