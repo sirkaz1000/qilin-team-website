@@ -2,6 +2,20 @@ const { query } = require('./postgres')
 const fs = require('fs')
 const path = require('path')
 
+// Helper function to convert snake_case to camelCase
+function toCamelCase(obj) {
+  if (!obj || typeof obj !== 'object') return obj
+  
+  const newObj = {}
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      const newKey = key.replace(/_([a-z])/g, (match, letter) => letter.toUpperCase())
+      newObj[newKey] = obj[key]
+    }
+  }
+  return newObj
+}
+
 // Helper function to generate unique ID
 function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2)
@@ -39,7 +53,7 @@ async function getPosts() {
   const result = await query(
     'SELECT * FROM posts ORDER BY created_at DESC'
   )
-  return result.map(post => ({
+  return result.map(post => toCamelCase({
     ...post,
     id: post.id.toString()
   }))
@@ -53,10 +67,10 @@ async function createPost(postData) {
      RETURNING *`,
     [title, content, authorId, username, displayName, imageUrl, videoUrl, isPinned || false, new Date()]
   )
-  return {
+  return toCamelCase({
     ...result[0],
     id: result[0].id.toString()
-  }
+  })
 }
 
 // Achievements functions
@@ -64,7 +78,7 @@ async function getAchievements() {
   const result = await query(
     'SELECT * FROM achievements ORDER BY created_at DESC'
   )
-  return result.map(achievement => ({
+  return result.map(achievement => toCamelCase({
     ...achievement,
     id: achievement.id.toString()
   }))
@@ -78,10 +92,10 @@ async function createAchievement(achievementData) {
      RETURNING *`,
     [title, description, iconUrl, imageUrl, videoUrl, isFeatured || false, authorId, new Date()]
   )
-  return {
+  return toCamelCase({
     ...result[0],
     id: result[0].id.toString()
-  }
+  })
 }
 
 // Repositories functions (placeholder - using JSON for now)

@@ -24,6 +24,20 @@ function verifyToken(token) {
   }
 }
 
+// Helper function to convert snake_case to camelCase
+function toCamelCase(obj) {
+  if (!obj || typeof obj !== 'object') return obj
+  
+  const newObj = {}
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      const newKey = key.replace(/_([a-z])/g, (match, letter) => letter.toUpperCase())
+      newObj[newKey] = obj[key]
+    }
+  }
+  return newObj
+}
+
 async function createUser(username, email, password, displayName, role = 'USER', avatarUrl = null) {
   console.log('=== createUser (PostgreSQL) ===')
   console.log('Parameters:', { username, email, displayName, role, hasAvatarUrl: !!avatarUrl })
@@ -52,7 +66,7 @@ async function createUser(username, email, password, displayName, role = 'USER',
     [username, email, passwordHash, displayName, role, avatarUrl, true, new Date()]
   )
   
-  const user = result[0]
+  const user = toCamelCase(result[0])
   console.log('User created successfully:', { id: user.id, username: user.username })
   return user
 }
@@ -63,7 +77,7 @@ async function getUserByUsername(username) {
     [username]
   )
   if (result.length === 0) return null
-  return result[0]
+  return toCamelCase(result[0])
 }
 
 async function getUserById(id) {
@@ -72,7 +86,7 @@ async function getUserById(id) {
     [id]
   )
   if (result.length === 0) return null
-  return result[0]
+  return toCamelCase(result[0])
 }
 
 async function authenticateUser(username, password) {
@@ -84,16 +98,16 @@ async function authenticateUser(username, password) {
     [username]
   )
   
-  const user = result[0]
-  console.log('User found:', { id: user?.id, username: user?.username, isActive: user?.is_active })
+  const user = toCamelCase(result[0])
+  console.log('User found:', { id: user?.id, username: user?.username, isActive: user?.isActive })
   
-  if (!user || !user.is_active) {
+  if (!user || !user.isActive) {
     console.log('Authentication failed: user not found or inactive')
     throw new Error('Invalid credentials')
   }
   
   console.log('Comparing password...')
-  const isValid = await comparePassword(password, user.password_hash)
+  const isValid = await comparePassword(password, user.passwordHash)
   console.log('Password comparison result:', isValid)
   
   if (!isValid) {
@@ -102,7 +116,7 @@ async function authenticateUser(username, password) {
   }
   
   const userCopy = { ...user }
-  delete userCopy.password_hash
+  delete userCopy.passwordHash
   console.log('Authentication successful:', { id: userCopy.id, username: userCopy.username })
   return userCopy
 }

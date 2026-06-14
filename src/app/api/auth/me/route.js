@@ -1,4 +1,4 @@
-const { getUserById, verifyToken } = require('@/lib/auth-simple')
+const { getUserById, verifyToken, toCamelCase } = require('@/lib/auth-simple')
 
 export async function GET(request) {
   try {
@@ -23,7 +23,7 @@ export async function GET(request) {
     }
 
     // Return user data without password
-    const { password_hash: _, ...userWithoutPassword } = user
+    const { passwordHash: _, ...userWithoutPassword } = user
 
     return Response.json(userWithoutPassword)
   } catch (error) {
