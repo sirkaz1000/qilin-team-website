@@ -10,6 +10,10 @@ export default function FAQAuthPage() {
   const [openIndex, setOpenIndex] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
+  const [showSupportModal, setShowSupportModal] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitMessage, setSubmitMessage] = useState({ type: '', text: '' })
+  const [supportForm, setSupportForm] = useState({ subject: '', message: '' })
 
   useEffect(() => {
     fetchFAQs()
@@ -26,6 +30,38 @@ export default function FAQAuthPage() {
       console.error('Error fetching FAQs:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleSubmitSupport = async (e) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    setSubmitMessage({ type: '', text: '' })
+
+    try {
+      const response = await fetch('/api/support', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          subject: supportForm.subject,
+          message: supportForm.message,
+        }),
+      })
+
+      if (response.ok) {
+        setSupportForm({ subject: '', message: '' })
+        setSubmitMessage({ type: 'success', text: 'Ticket submitted successfully!' })
+      } else {
+        const errorData = await response.json()
+        setSubmitMessage({ type: 'error', text: errorData.error || 'Failed to submit ticket' })
+      }
+    } catch (error) {
+      console.error('Error submitting ticket:', error)
+      setSubmitMessage({ type: 'error', text: 'Failed to submit ticket. Please try again.' })
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -143,7 +179,81 @@ export default function FAQAuthPage() {
           <p className="mb-4 opacity-90">
             {t('cantFindAnswer')}
           </p>
+          <button
+            onClick={() => setShowSupportModal(true)}
+            className="px-6 py-3 bg-white text-qilin-blue rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+          >
+            {t('contactSupport')}
+          </button>
         </div>
+
+        {/* Support Modal */}
+        {showSupportModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4">
+              <h3 className="text-xl font-bold text-qilin-blue mb-4">{t('contactSupport')}</h3>
+              {submitMessage.text && (
+                <div
+                  className={`mb-4 p-4 rounded-lg ${
+                    submitMessage.type === 'success'
+                      ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                      : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
+                  }`}
+                >
+                  {submitMessage.text}
+                </div>
+              )}
+              <form onSubmit={handleSubmitSupport} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    {t('subject')}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={supportForm.subject}
+                    onChange={(e) => setSupportForm({ ...supportForm, subject: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-qilin-blue bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    placeholder={t('subject')}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    {t('message')}
+                  </label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={supportForm.message}
+                    onChange={(e) => setSupportForm({ ...supportForm, message: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-qilin-blue bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
+                    placeholder={t('message')}
+                  />
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="flex-1 px-4 py-2 bg-qilin-blue text-white rounded-lg hover:bg-qilin-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSubmitting ? t('loading') : t('send')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowSupportModal(false)
+                      setSupportForm({ subject: '', message: '' })
+                      setSubmitMessage({ type: '', text: '' })
+                    }}
+                    className="flex-1 px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-white rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
+                  >
+                    {t('cancel')}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
