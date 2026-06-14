@@ -31,7 +31,7 @@ export async function GET(request) {
     const newUsers = users.filter(u => new Date(u.createdAt) >= sevenDaysAgo).length
 
     // Get total admins
-    const totalAdmins = users.filter(u => u.role === 'ADMIN').length
+    const totalAdmins = users.filter(u => u.role === 'ADMIN' && u.isActive).length
 
     // Get total orders
     const orders = readDataFile('store-orders.json') || []
