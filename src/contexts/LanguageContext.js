@@ -125,6 +125,13 @@ const translations = {
     siteSettings: 'إعدادات الموقع',
     siteSettingsDesc: 'تكوين إعدادات الموقع والتفضيلات.',
     
+    // Copyright
+    copyright: '© 2026 Qilin Team All Rights Reserved',
+    allRightsReserved: 'جميع الحقوق محفوظة لفريق Qilin',
+    copyrightText: 'جميع الأفكار والتصاميم والمشاريع والمحتوى المعروض على هذا الموقع هي ملكية حصرية لفريق Qilin ومحمية بموجب قوانين الملكية الفكرية وحقوق النشر',
+    copyrightProhibition: 'يُمنع منعاً باتاً أي نسخ أو إعادة استخدام أو تعديل أو إعادة نشر أي جزء من هذا المحتوى دون الحصول على إذن كتابي مسبق من الفريق',
+    copyrightLegal: 'سيتم اعتبار أي استخدام غير مصرح به انتهاكاً لحقوق الملكية الفكرية، ويحتفظ فريق Qilin بالحق الكامل في اتخاذ الإجراءات القانونية المناسبة لحماية أعماله ومحتواه',
+    
     // Store
     store: 'المتجر',
     services: 'الخدمات',
@@ -318,6 +325,13 @@ const translations = {
     viewAllTickets: 'View All Tickets',
     siteSettings: 'Site Settings',
     siteSettingsDesc: 'Configure site-wide settings and preferences.',
+    
+    // Copyright
+    copyright: '© 2026 Qilin Team All Rights Reserved',
+    allRightsReserved: 'All rights reserved to Qilin Team',
+    copyrightText: 'All ideas designs projects and content displayed on this website are the exclusive property of Qilin Team and are protected under intellectual property and copyright laws',
+    copyrightProhibition: 'Any copying reuse modification or republication of any part of this content without prior written permission from the team is strictly prohibited',
+    copyrightLegal: 'Any unauthorized use will be regarded as an infringement of intellectual property rights and Qilin Team reserves the full right to take appropriate legal action to protect its work and content',
     
     // Store
     store: 'Store',
