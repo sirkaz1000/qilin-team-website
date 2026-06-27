@@ -18,21 +18,28 @@ function validateRole(role) {
 export async function GET(request) {
   try {
     const authHeader = request.headers.get('authorization')
+    console.log('Auth header:', authHeader)
+    
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('Missing or invalid auth header')
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const token = authHeader.substring(7)
     const decoded = verifyToken(token)
+    console.log('Decoded token:', decoded)
 
     if (!decoded) {
+      console.log('Invalid token')
       return Response.json({ error: 'Invalid token' }, { status: 401 })
     }
 
     const users = readDataFile('users.json')
     const user = users.find(u => u.id === decoded.userId)
+    console.log('Current user:', user)
 
     if (!user || user.role !== 'ADMIN' || !user.isActive) {
+      console.log('User is not admin or not active')
       return Response.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -47,6 +54,7 @@ export async function GET(request) {
       createdAt: u.createdAt,
     })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
 
+    console.log('Returning users list:', usersList)
     return Response.json(usersList)
   } catch (error) {
     console.error('Error fetching users:', error)
