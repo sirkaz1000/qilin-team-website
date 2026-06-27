@@ -64,11 +64,19 @@ export default function AdminTeamPage() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {admins.map((admin) => (
             <div key={admin.id} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6 flex items-center space-x-4">
-              <div className="w-12 h-12 bg-qilin-blue rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-xl">
-                  {admin.displayName.charAt(0).toUpperCase()}
-                </span>
-              </div>
+              {admin.avatarUrl ? (
+                <img 
+                  src={admin.avatarUrl} 
+                  alt={admin.displayName}
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-12 h-12 bg-qilin-blue rounded-full flex items-center justify-center">
+                  <span className="text-white font-bold text-xl">
+                    {admin.displayName.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
               <div className="flex-1">
                 <div className="flex items-center space-x-2">
                   <h3 className="font-semibold text-gray-900 dark:text-white">
