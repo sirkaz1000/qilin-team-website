@@ -26,7 +26,11 @@ export default function AdminTeamPage() {
 
   const fetchAdmins = async () => {
     try {
-      const response = await fetch('/api/users')
+      const response = await fetch('/api/users', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      })
       if (response.ok) {
         const data = await response.json()
         const adminUsers = data.filter(u => u.role === 'ADMIN' && u.isActive)
