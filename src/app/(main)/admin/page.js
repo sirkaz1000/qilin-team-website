@@ -38,6 +38,12 @@ export default function AdminPage() {
     }
   }, [isAdmin])
 
+  useEffect(() => {
+    if (isAdmin && activeTab === 'users') {
+      fetchUsers()
+    }
+  }, [activeTab, isAdmin])
+
   const fetchStats = async () => {
     try {
       const response = await fetch('/api/admin/stats', {
