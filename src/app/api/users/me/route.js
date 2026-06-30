@@ -43,12 +43,15 @@ export async function GET(request) {
 export async function PATCH(request) {
   try {
     const authHeader = request.headers.get('authorization')
+    console.log('Auth header:', authHeader)
+    
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const token = authHeader.substring(7)
     const decoded = verifyToken(token)
+    console.log('Decoded token:', decoded)
 
     if (!decoded) {
       return Response.json({ error: 'Invalid token' }, { status: 401 })
@@ -56,11 +59,15 @@ export async function PATCH(request) {
 
     const body = await request.json()
     const { displayName, username, avatarUrl, password } = body
+    console.log('Request body:', body)
 
     const users = readDataFile('users.json')
     const userIndex = users.findIndex(u => u.id === decoded.userId)
+    console.log('User index:', userIndex)
+    console.log('User ID from token:', decoded.userId)
 
     if (userIndex === -1) {
+      console.log('User not found')
       return Response.json({ error: 'User not found' }, { status: 404 })
     }
 
