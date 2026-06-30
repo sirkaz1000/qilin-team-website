@@ -136,7 +136,7 @@ export default function HomePage() {
 
   const handleSaveSettings = async () => {
     try {
-      const response = await fetch('/api/auth/me', {
+      const response = await fetch('/api/update-user', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
