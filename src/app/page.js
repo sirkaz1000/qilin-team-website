@@ -17,6 +17,10 @@ export default function HomePage() {
   const [uploading, setUploading] = useState(false)
   const [pinnedPosts, setPinnedPosts] = useState([])
   const [featuredAchievements, setFeaturedAchievements] = useState([])
+  const [settingsData, setSettingsData] = useState({
+    displayName: '',
+    username: '',
+  })
   const fileInputRef = useRef(null)
 
   useEffect(() => {
@@ -30,6 +34,10 @@ export default function HomePage() {
       fetchComments()
       fetchPinnedPosts()
       fetchFeaturedAchievements()
+      setSettingsData({
+        displayName: user.displayName,
+        username: user.username,
+      })
     }
   }, [user])
 
@@ -114,26 +122,43 @@ export default function HomePage() {
       if (response.ok) {
         const data = await response.json()
         setAvatarFile(file)
-        // Update user avatar
-        const updateResponse = await fetch('/api/users/me', {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          body: JSON.stringify({
-            avatarUrl: data.url
-          })
+        setSettingsData({
+          ...settingsData,
+          avatarUrl: data.url
         })
-        if (updateResponse.ok) {
-          // Refresh user data
-          window.location.reload()
-        }
       }
     } catch (error) {
       console.error('Error uploading avatar:', error)
     } finally {
       setUploading(false)
+    }
+  }
+
+  const handleSaveSettings = async () => {
+    try {
+      const response = await fetch('/api/users/me', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          displayName: settingsData.displayName,
+          username: settingsData.username,
+          avatarUrl: settingsData.avatarUrl,
+        })
+      })
+
+      if (response.ok) {
+        setShowSettings(false)
+        window.location.reload()
+      } else {
+        const errorData = await response.json()
+        alert(errorData.error || 'Failed to update settings')
+      }
+    } catch (error) {
+      console.error('Error updating settings:', error)
+      alert('Failed to update settings')
     }
   }
 
@@ -304,7 +329,8 @@ export default function HomePage() {
                 </label>
                 <input
                   type="text"
-                  defaultValue={user.displayName}
+                  value={settingsData.displayName}
+                  onChange={(e) => setSettingsData({ ...settingsData, displayName: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-qilin-blue bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
@@ -314,7 +340,8 @@ export default function HomePage() {
                 </label>
                 <input
                   type="text"
-                  defaultValue={user.username}
+                  value={settingsData.username}
+                  onChange={(e) => setSettingsData({ ...settingsData, username: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-qilin-blue bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
@@ -353,7 +380,7 @@ export default function HomePage() {
                 )}
               </div>
               <div className="flex space-x-2">
-                <button className="flex-1 px-4 py-2 bg-qilin-blue text-white rounded-lg hover:bg-qilin-dark transition-colors">
+                <button onClick={handleSaveSettings} className="flex-1 px-4 py-2 bg-qilin-blue text-white rounded-lg hover:bg-qilin-dark transition-colors">
                   {t('save')}
                 </button>
                 <button
