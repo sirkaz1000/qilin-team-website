@@ -1,4 +1,4 @@
-const { verifyToken } = require('@/lib/auth-simple')
+const { verifyToken, hashPassword } = require('@/lib/auth-simple')
 const { readDataFile, writeDataFile } = require('@/lib/data-simple')
 
 // Input validation helpers
@@ -76,54 +76,97 @@ export async function PATCH(request) {
       return Response.json({ error: 'Invalid token' }, { status: 401 })
     }
 
-    const users = readDataFile('users.json')
-    const currentUser = users.find(u => u.id === decoded.userId)
-
-    if (!currentUser || currentUser.role !== 'ADMIN' || !currentUser.isActive) {
-      return Response.json({ error: 'Forbidden' }, { status: 403 })
-    }
-
     const body = await request.json()
-    const { userId, isActive, role } = body
+    const { userId, isActive, role, displayName, username, avatarUrl, password } = body
 
-    if (!userId) {
-      return Response.json({ error: 'User ID is required' }, { status: 400 })
-    }
+    const users = readDataFile('users.json')
+    
+    // If userId is provided, update that user (admin only)
+    if (userId) {
+      const currentUser = users.find(u => u.id === decoded.userId)
 
-    // Validate role if provided
-    if (role !== undefined) {
-      const roleValidation = validateRole(role)
-      if (!roleValidation.isValid) {
-        return Response.json({ error: roleValidation.error }, { status: 400 })
+      if (!currentUser || currentUser.role !== 'ADMIN' || !currentUser.isActive) {
+        return Response.json({ error: 'Forbidden' }, { status: 403 })
       }
-    }
 
-    const userIndex = users.findIndex(u => u.id === userId)
-    if (userIndex === -1) {
-      return Response.json({ error: 'User not found' }, { status: 404 })
-    }
+      // Validate role if provided
+      if (role !== undefined) {
+        const roleValidation = validateRole(role)
+        if (!roleValidation.isValid) {
+          return Response.json({ error: roleValidation.error }, { status: 400 })
+        }
+      }
 
-    if (isActive !== undefined) {
-      users[userIndex].isActive = isActive
-    }
-    if (role !== undefined) {
-      users[userIndex].role = sanitizeInput(role)
-    }
+      const userIndex = users.findIndex(u => u.id === userId)
+      if (userIndex === -1) {
+        return Response.json({ error: 'User not found' }, { status: 404 })
+      }
 
-    writeDataFile('users.json', users)
+      if (isActive !== undefined) {
+        users[userIndex].isActive = isActive
+      }
+      if (role !== undefined) {
+        users[userIndex].role = sanitizeInput(role)
+      }
 
-    const updatedUser = {
-      id: users[userIndex].id,
-      username: users[userIndex].username,
-      email: users[userIndex].email,
-      displayName: users[userIndex].displayName,
-      avatarUrl: users[userIndex].avatarUrl,
-      role: users[userIndex].role,
-      isActive: users[userIndex].isActive,
-      createdAt: users[userIndex].createdAt,
+      writeDataFile('users.json', users)
+
+      const updatedUser = {
+        id: users[userIndex].id,
+        username: users[userIndex].username,
+        email: users[userIndex].email,
+        displayName: users[userIndex].displayName,
+        avatarUrl: users[userIndex].avatarUrl,
+        role: users[userIndex].role,
+        isActive: users[userIndex].isActive,
+        createdAt: users[userIndex].createdAt,
+      }
+
+      return Response.json(updatedUser)
+    } else {
+      // Update current user's own data
+      const userIndex = users.findIndex(u => u.id === decoded.userId)
+
+      if (userIndex === -1) {
+        return Response.json({ error: 'User not found' }, { status: 404 })
+      }
+
+      if (displayName !== undefined) {
+        users[userIndex].displayName = displayName
+      }
+
+      if (username !== undefined) {
+        // Check if username is already taken
+        const existingUser = users.find(u => u.username === username && u.id !== decoded.userId)
+        if (existingUser) {
+          return Response.json({ error: 'Username already taken' }, { status: 400 })
+        }
+        users[userIndex].username = username
+      }
+
+      if (avatarUrl !== undefined) {
+        users[userIndex].avatarUrl = avatarUrl
+      }
+
+      if (password !== undefined) {
+        users[userIndex].passwordHash = hashPassword(password)
+      }
+
+      writeDataFile('users.json', users)
+
+      const updatedUser = {
+        id: users[userIndex].id,
+        username: users[userIndex].username,
+        email: users[userIndex].email,
+        displayName: users[userIndex].displayName,
+        avatarUrl: users[userIndex].avatarUrl,
+        role: users[userIndex].role,
+        isActive: users[userIndex].isActive,
+        createdAt: users[userIndex].createdAt,
+      }
+
+      return Response.json(updatedUser)
     }
-
-    return Response.json(updatedUser)
   } catch (error) {
     console.error('Error updating user:', error)
     return Response.json({ error: 'Failed to update user' }, { status: 500 })
