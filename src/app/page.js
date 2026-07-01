@@ -136,8 +136,8 @@ export default function HomePage() {
 
   const handleSaveSettings = async () => {
     try {
-      const response = await fetch('/api/auth/update-profile', {
-        method: 'PATCH',
+      const response = await fetch('/api/updateprofile', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
