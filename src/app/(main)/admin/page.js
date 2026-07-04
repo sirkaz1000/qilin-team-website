@@ -70,6 +70,8 @@ export default function AdminPage() {
       if (response.ok) {
         const data = await response.json()
         console.log('Fetched users:', data)
+        // log avatar URLs for debugging
+        data.forEach(u => console.log('avatarUrl:', u.id, u.avatarUrl))
         setUsers(data)
       } else {
         console.error('Failed to fetch users:', response.status)
@@ -299,12 +301,27 @@ export default function AdminPage() {
                   <div key={userItem.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                     <div className="flex items-center space-x-4">
                       {userItem.avatarUrl ? (
-                        <img
-                          src={userItem.avatarUrl}
-                          alt={userItem.displayName || userItem.username}
-                          onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/avatars/default.png' }}
-                          className="w-10 h-10 rounded-full object-cover"
-                        />
+                        (() => {
+                          try {
+                            const avatarSrc = (typeof window !== 'undefined')
+                              ? (userItem.avatarUrl.startsWith('http') ? userItem.avatarUrl : `${window.location.origin}${userItem.avatarUrl.startsWith('/') ? '' : '/'}${userItem.avatarUrl}`)
+                              : userItem.avatarUrl
+                            return (
+                              <img
+                                src={avatarSrc}
+                                alt={userItem.displayName || userItem.username}
+                                onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/avatars/default.svg' }}
+                                className="w-10 h-10 rounded-full object-cover"
+                              />
+                            )
+                          } catch (e) {
+                            return (
+                              <div className="w-10 h-10 bg-qilin-blue rounded-full flex items-center justify-center">
+                                <span className="text-white font-medium">{(userItem.displayName || userItem.username || '').charAt(0).toUpperCase()}</span>
+                              </div>
+                            )
+                          }
+                        })()
                       ) : (
                         <div className="w-10 h-10 bg-qilin-blue rounded-full flex items-center justify-center">
                           <span className="text-white font-medium">{(userItem.displayName || userItem.username || '').charAt(0).toUpperCase()}</span>
