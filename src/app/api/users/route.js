@@ -1,4 +1,4 @@
-const { verifyToken, hashPassword } = require('@/lib/auth-simple')
+const { verifyToken, hashPassword, updateUserProfile, updateUserAdmin, getUserById } = require('@/lib/auth-simple')
 const { readDataFile, writeDataFile } = require('@/lib/data-simple')
 
 // Input validation helpers
@@ -34,6 +34,7 @@ export async function GET(request) {
       return Response.json({ error: 'Invalid token' }, { status: 401 })
     }
 
+    // For listing users, prefer the JSON file (admin UI) — keep existing behaviour
     const users = readDataFile('users.json')
     // normalize id comparison to string to avoid type mismatch
     const user = users.find(u => String(u.id) === String(decoded.userId))
@@ -63,6 +64,41 @@ export async function GET(request) {
   }
 }
 
+// Helper: if a user isn't in users.json, try to fetch from DB and append
+async function ensureUserInJson(users, targetId) {
+  const idx = users.findIndex(u => String(u.id) === String(targetId))
+  if (idx !== -1) return idx
+
+  try {
+    const dbUser = await getUserById(targetId)
+    if (!dbUser) return -1
+
+    const newUser = {
+      id: String(dbUser.id),
+      username: dbUser.username,
+      email: dbUser.email,
+      displayName: dbUser.displayName || dbUser.display_name || '',
+      avatarUrl: dbUser.avatarUrl || dbUser.avatar_url || null,
+      role: dbUser.role || 'USER',
+      isActive: dbUser.isActive !== undefined ? dbUser.isActive : true,
+      createdAt: dbUser.createdAt || new Date().toISOString(),
+      // passwordHash may not be returned by getUserById; keep absent or null
+    }
+
+    users.push(newUser)
+    const ok = writeDataFile('users.json', users)
+    if (!ok) {
+      console.error('Failed to persist users.json when syncing from DB')
+      return -1
+    }
+
+    return users.findIndex(u => String(u.id) === String(targetId))
+  } catch (err) {
+    console.error('Error ensuring user in JSON:', err)
+    return -1
+  }
+}
+
 export async function PATCH(request) {
   try {
     const authHeader = request.headers.get('authorization')
@@ -80,13 +116,12 @@ export async function PATCH(request) {
     const body = await request.json()
     const { userId, isActive, role, displayName, username, avatarUrl, password } = body
 
-    const users = readDataFile('users.json')
-    
     // If userId is provided, update that user (admin only)
     if (userId) {
-      const currentUser = users.find(u => String(u.id) === String(decoded.userId))
-
-      if (!currentUser || currentUser.role !== 'ADMIN' || !currentUser.isActive) {
+      // Ensure the current user (admin) exists in DB or JSON
+      // Prefer DB check for admin
+      const admin = await getUserById(decoded.userId)
+      if (!admin || admin.role !== 'ADMIN' || !admin.isActive) {
         return Response.json({ error: 'Forbidden' }, { status: 403 })
       }
 
@@ -98,85 +133,61 @@ export async function PATCH(request) {
         }
       }
 
-      const userIndex = users.findIndex(u => String(u.id) === String(userId))
-      if (userIndex === -1) {
-        return Response.json({ error: 'User not found' }, { status: 404 })
+      // Perform admin update directly in DB
+      const updated = await updateUserAdmin(userId, { isActive, role })
+      if (!updated) return Response.json({ error: 'User not found' }, { status: 404 })
+
+      // Sync to JSON (best-effort) so admin UI shows updated info
+      try {
+        const users = readDataFile('users.json')
+        let idx = users.findIndex(u => String(u.id) === String(userId))
+        if (idx === -1) {
+          idx = await ensureUserInJson(users, userId)
+        }
+        if (idx !== -1) {
+          users[idx].isActive = updated.isActive
+          users[idx].role = updated.role
+          writeDataFile('users.json', users)
+        }
+      } catch (e) {
+        console.warn('Could not sync admin update to users.json:', e)
       }
 
-      if (isActive !== undefined) {
-        users[userIndex].isActive = isActive
-      }
-      if (role !== undefined) {
-        users[userIndex].role = sanitizeInput(role)
-      }
-
-      const ok = writeDataFile('users.json', users)
-      if (!ok) {
-        console.error('Failed to write users.json')
-        return Response.json({ error: 'Failed to update user' }, { status: 500 })
-      }
-
-      const updatedUser = {
-        id: users[userIndex].id,
-        username: users[userIndex].username,
-        email: users[userIndex].email,
-        displayName: users[userIndex].displayName,
-        avatarUrl: users[userIndex].avatarUrl,
-        role: users[userIndex].role,
-        isActive: users[userIndex].isActive,
-        createdAt: users[userIndex].createdAt,
-      }
-
-      return Response.json(updatedUser)
+      return Response.json(updated)
     } else {
       // Update current user's own data
-      const currentUserId = String(decoded.userId)
-      const userIndex = users.findIndex(u => String(u.id) === currentUserId)
+      const currentUserId = decoded.userId
 
-      if (userIndex === -1) {
-        return Response.json({ error: 'User not found' }, { status: 404 })
-      }
+      // Perform DB update for profile fields
+      try {
+        const updated = await updateUserProfile(currentUserId, { displayName, username, avatarUrl, password })
+        if (!updated) return Response.json({ error: 'User not found' }, { status: 404 })
 
-      if (displayName !== undefined) {
-        users[userIndex].displayName = displayName
-      }
+        // Sync to JSON (best-effort)
+        try {
+          const users = readDataFile('users.json')
+          let idx = users.findIndex(u => String(u.id) === String(currentUserId))
+          if (idx === -1) {
+            idx = await ensureUserInJson(users, currentUserId)
+          }
+          if (idx !== -1) {
+            users[idx].displayName = updated.displayName
+            users[idx].username = updated.username
+            users[idx].avatarUrl = updated.avatarUrl
+            writeDataFile('users.json', users)
+          }
+        } catch (e) {
+          console.warn('Could not sync profile update to users.json:', e)
+        }
 
-      if (username !== undefined) {
-        // Check if username is already taken
-        const existingUser = users.find(u => u.username === username && String(u.id) !== currentUserId)
-        if (existingUser) {
+        return Response.json(updated)
+      } catch (err) {
+        if (err.code === 'USERNAME_TAKEN') {
           return Response.json({ error: 'Username already taken' }, { status: 400 })
         }
-        users[userIndex].username = username
-      }
-
-      if (avatarUrl !== undefined) {
-        users[userIndex].avatarUrl = avatarUrl
-      }
-
-      if (password !== undefined) {
-        // Await the hash result (hashPassword is async)
-        users[userIndex].passwordHash = await hashPassword(password)
-      }
-
-      const ok = writeDataFile('users.json', users)
-      if (!ok) {
-        console.error('Failed to write users.json')
+        console.error('Error updating user in DB:', err)
         return Response.json({ error: 'Failed to update user' }, { status: 500 })
       }
-
-      const updatedUser = {
-        id: users[userIndex].id,
-        username: users[userIndex].username,
-        email: users[userIndex].email,
-        displayName: users[userIndex].displayName,
-        avatarUrl: users[userIndex].avatarUrl,
-        role: users[userIndex].role,
-        isActive: users[userIndex].isActive,
-        createdAt: users[userIndex].createdAt,
-      }
-
-      return Response.json(updatedUser)
     }
   } catch (error) {
     console.error('Error updating user:', error)
