@@ -1,5 +1,4 @@
-const { verifyToken, hashPassword, updateUserProfile, updateUserAdmin, getUserById } = require('@/lib/auth-simple')
-const { readDataFile, writeDataFile } = require('@/lib/data-simple')
+const { verifyToken, hashPassword, updateUserProfile, updateUserAdmin, getUserById, getAllUsers } = require('@/lib/auth-simple')
 
 // Input validation helpers
 function sanitizeInput(input) {
@@ -15,87 +14,53 @@ function validateRole(role) {
   return { isValid: true }
 }
 
+function toAbsoluteUrl(url, request) {
+  if (!url) return null
+  if (url.startsWith('http')) return url
+  try {
+    const origin = process.env.NEXT_PUBLIC_APP_URL || (request && request.headers && request.headers.get('origin')) || ''
+    if (origin) return `${origin}${url.startsWith('/') ? '' : '/'}${url}`
+    return url.startsWith('/') ? url : `/${url}`
+  } catch (e) {
+    return url
+  }
+}
+
 export async function GET(request) {
   try {
     const authHeader = request.headers.get('authorization')
-    console.log('Auth header:', authHeader)
-    
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.log('Missing or invalid auth header')
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const token = authHeader.substring(7)
     const decoded = verifyToken(token)
-    console.log('Decoded token:', decoded)
-
     if (!decoded) {
-      console.log('Invalid token')
       return Response.json({ error: 'Invalid token' }, { status: 401 })
     }
 
-    // For listing users, prefer the JSON file (admin UI) — keep existing behaviour
-    const users = readDataFile('users.json')
-    // normalize id comparison to string to avoid type mismatch
-    const user = users.find(u => String(u.id) === String(decoded.userId))
-    console.log('Current user:', user)
-
-    if (!user || user.role !== 'ADMIN' || !user.isActive) {
-      console.log('User is not admin or not active')
+    // Prefer DB for authoritative user list
+    const currentUser = await getUserById(decoded.userId)
+    if (!currentUser || currentUser.role !== 'ADMIN' || !currentUser.isActive) {
       return Response.json({ error: 'Forbidden' }, { status: 403 })
     }
 
+    const users = await getAllUsers()
     const usersList = users.map(u => ({
       id: u.id,
       username: u.username,
       email: u.email,
       displayName: u.displayName,
-      avatarUrl: u.avatarUrl,
+      avatarUrl: toAbsoluteUrl(u.avatarUrl, request),
       role: u.role,
       isActive: u.isActive,
       createdAt: u.createdAt,
-    })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    }))
 
-    console.log('Returning users list:', usersList)
     return Response.json(usersList)
   } catch (error) {
     console.error('Error fetching users:', error)
     return Response.json({ error: 'Failed to fetch users' }, { status: 500 })
-  }
-}
-
-// Helper: if a user isn't in users.json, try to fetch from DB and append
-async function ensureUserInJson(users, targetId) {
-  const idx = users.findIndex(u => String(u.id) === String(targetId))
-  if (idx !== -1) return idx
-
-  try {
-    const dbUser = await getUserById(targetId)
-    if (!dbUser) return -1
-
-    const newUser = {
-      id: String(dbUser.id),
-      username: dbUser.username,
-      email: dbUser.email,
-      displayName: dbUser.displayName || dbUser.display_name || '',
-      avatarUrl: dbUser.avatarUrl || dbUser.avatar_url || null,
-      role: dbUser.role || 'USER',
-      isActive: dbUser.isActive !== undefined ? dbUser.isActive : true,
-      createdAt: dbUser.createdAt || new Date().toISOString(),
-      // passwordHash may not be returned by getUserById; keep absent or null
-    }
-
-    users.push(newUser)
-    const ok = writeDataFile('users.json', users)
-    if (!ok) {
-      console.error('Failed to persist users.json when syncing from DB')
-      return -1
-    }
-
-    return users.findIndex(u => String(u.id) === String(targetId))
-  } catch (err) {
-    console.error('Error ensuring user in JSON:', err)
-    return -1
   }
 }
 
@@ -118,14 +83,11 @@ export async function PATCH(request) {
 
     // If userId is provided, update that user (admin only)
     if (userId) {
-      // Ensure the current user (admin) exists in DB or JSON
-      // Prefer DB check for admin
       const admin = await getUserById(decoded.userId)
       if (!admin || admin.role !== 'ADMIN' || !admin.isActive) {
         return Response.json({ error: 'Forbidden' }, { status: 403 })
       }
 
-      // Validate role if provided
       if (role !== undefined) {
         const roleValidation = validateRole(role)
         if (!roleValidation.isValid) {
@@ -137,48 +99,14 @@ export async function PATCH(request) {
       const updated = await updateUserAdmin(userId, { isActive, role })
       if (!updated) return Response.json({ error: 'User not found' }, { status: 404 })
 
-      // Sync to JSON (best-effort) so admin UI shows updated info
-      try {
-        const users = readDataFile('users.json')
-        let idx = users.findIndex(u => String(u.id) === String(userId))
-        if (idx === -1) {
-          idx = await ensureUserInJson(users, userId)
-        }
-        if (idx !== -1) {
-          users[idx].isActive = updated.isActive
-          users[idx].role = updated.role
-          writeDataFile('users.json', users)
-        }
-      } catch (e) {
-        console.warn('Could not sync admin update to users.json:', e)
-      }
-
       return Response.json(updated)
     } else {
       // Update current user's own data
       const currentUserId = decoded.userId
 
-      // Perform DB update for profile fields
       try {
         const updated = await updateUserProfile(currentUserId, { displayName, username, avatarUrl, password })
         if (!updated) return Response.json({ error: 'User not found' }, { status: 404 })
-
-        // Sync to JSON (best-effort)
-        try {
-          const users = readDataFile('users.json')
-          let idx = users.findIndex(u => String(u.id) === String(currentUserId))
-          if (idx === -1) {
-            idx = await ensureUserInJson(users, currentUserId)
-          }
-          if (idx !== -1) {
-            users[idx].displayName = updated.displayName
-            users[idx].username = updated.username
-            users[idx].avatarUrl = updated.avatarUrl
-            writeDataFile('users.json', users)
-          }
-        } catch (e) {
-          console.warn('Could not sync profile update to users.json:', e)
-        }
 
         return Response.json(updated)
       } catch (err) {
