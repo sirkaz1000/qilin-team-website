@@ -4,11 +4,11 @@
     "username": "sir.kaz",
     "email": "sirkaz@team.qilin",
     "passwordHash": "$2a$12$.Jq0MsHv9krlHgPmcb6q2uxbxMAvV/9LETgFVJGxXVcmrVsHe9Sha",
-    "displayName": "Sir Kaz",
+    "displayName": "Sir Kaz Updated",
     "role": "ADMIN",
     "isActive": true,
     "createdAt": "2026-05-25T06:00:00.000Z",
-    "avatarUrl": "/uploads/17276c09-7324-4dcd-acca-e9b0aefabcf2.jpg"
+    "avatarUrl": "/uploads/test-avatar.jpg"
   },
   {
     "id": "a7984d5f-8e21-4318-933e-502284184245",
