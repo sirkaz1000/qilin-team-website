@@ -35,7 +35,8 @@ export async function GET(request) {
     }
 
     const users = readDataFile('users.json')
-    const user = users.find(u => u.id === decoded.userId)
+    // normalize id comparison to string to avoid type mismatch
+    const user = users.find(u => String(u.id) === String(decoded.userId))
     console.log('Current user:', user)
 
     if (!user || user.role !== 'ADMIN' || !user.isActive) {
@@ -83,7 +84,7 @@ export async function PATCH(request) {
     
     // If userId is provided, update that user (admin only)
     if (userId) {
-      const currentUser = users.find(u => u.id === decoded.userId)
+      const currentUser = users.find(u => String(u.id) === String(decoded.userId))
 
       if (!currentUser || currentUser.role !== 'ADMIN' || !currentUser.isActive) {
         return Response.json({ error: 'Forbidden' }, { status: 403 })
@@ -97,7 +98,7 @@ export async function PATCH(request) {
         }
       }
 
-      const userIndex = users.findIndex(u => u.id === userId)
+      const userIndex = users.findIndex(u => String(u.id) === String(userId))
       if (userIndex === -1) {
         return Response.json({ error: 'User not found' }, { status: 404 })
       }
@@ -109,7 +110,11 @@ export async function PATCH(request) {
         users[userIndex].role = sanitizeInput(role)
       }
 
-      writeDataFile('users.json', users)
+      const ok = writeDataFile('users.json', users)
+      if (!ok) {
+        console.error('Failed to write users.json')
+        return Response.json({ error: 'Failed to update user' }, { status: 500 })
+      }
 
       const updatedUser = {
         id: users[userIndex].id,
@@ -125,7 +130,8 @@ export async function PATCH(request) {
       return Response.json(updatedUser)
     } else {
       // Update current user's own data
-      const userIndex = users.findIndex(u => u.id === decoded.userId)
+      const currentUserId = String(decoded.userId)
+      const userIndex = users.findIndex(u => String(u.id) === currentUserId)
 
       if (userIndex === -1) {
         return Response.json({ error: 'User not found' }, { status: 404 })
@@ -137,7 +143,7 @@ export async function PATCH(request) {
 
       if (username !== undefined) {
         // Check if username is already taken
-        const existingUser = users.find(u => u.username === username && u.id !== decoded.userId)
+        const existingUser = users.find(u => u.username === username && String(u.id) !== currentUserId)
         if (existingUser) {
           return Response.json({ error: 'Username already taken' }, { status: 400 })
         }
@@ -149,10 +155,15 @@ export async function PATCH(request) {
       }
 
       if (password !== undefined) {
-        users[userIndex].passwordHash = hashPassword(password)
+        // Await the hash result (hashPassword is async)
+        users[userIndex].passwordHash = await hashPassword(password)
       }
 
-      writeDataFile('users.json', users)
+      const ok = writeDataFile('users.json', users)
+      if (!ok) {
+        console.error('Failed to write users.json')
+        return Response.json({ error: 'Failed to update user' }, { status: 500 })
+      }
 
       const updatedUser = {
         id: users[userIndex].id,
