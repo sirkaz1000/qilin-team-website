@@ -298,14 +298,21 @@ export default function AdminPage() {
                 {users.map((userItem) => (
                   <div key={userItem.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                     <div className="flex items-center space-x-4">
-                      <div className="w-10 h-10 bg-qilin-blue rounded-full flex items-center justify-center">
-                        <span className="text-white font-medium">
-                          {userItem.displayName.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
+                      {userItem.avatarUrl ? (
+                        <img
+                          src={userItem.avatarUrl}
+                          alt={userItem.displayName || userItem.username}
+                          onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/avatars/default.png' }}
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 bg-qilin-blue rounded-full flex items-center justify-center">
+                          <span className="text-white font-medium">{(userItem.displayName || userItem.username || '').charAt(0).toUpperCase()}</span>
+                        </div>
+                      )}
                       <div>
                         <div className="flex items-center space-x-2">
-                          <p className="font-semibold text-gray-900 dark:text-white">{userItem.displayName}</p>
+                          <p className="font-semibold text-gray-900 dark:text-white">{userItem.displayName || userItem.username}</p>
                           {userItem.role === 'ADMIN' && (
                             <Shield className="w-4 h-4 text-yellow-500" />
                           )}
