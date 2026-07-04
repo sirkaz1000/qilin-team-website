@@ -82,10 +82,11 @@ async function getUserByUsername(username) {
 
 async function getUserById(id) {
   const result = await query(
-    'SELECT id, username, email, display_name, role, avatar_url, is_active, created_at FROM users WHERE id = $1',
+    'SELECT id, username, email, display_name, role, avatar_url, is_active, created_at, password_hash FROM users WHERE id = $1',
     [id]
   )
-  if (result.length === 0) return null
+  if (!result || result.length === 0) return null
+  // Include password_hash internally but don't expose it in responses
   return toCamelCase(result[0])
 }
 
@@ -140,6 +141,64 @@ async function updateUserRole(userId, role) {
   return user
 }
 
+// New: update profile fields (displayName, username, avatarUrl, password)
+async function updateUserProfile(userId, { displayName, username, avatarUrl, password }) {
+  console.log('=== updateUserProfile ===', { userId, displayName, username, hasAvatar: !!avatarUrl, hasPassword: !!password })
+
+  const fields = []
+  const values = []
+  let idx = 1
+
+  if (displayName !== undefined) { fields.push(`display_name=$${idx++}`); values.push(displayName) }
+  if (username !== undefined) { fields.push(`username=$${idx++}`); values.push(username) }
+  if (avatarUrl !== undefined) { fields.push(`avatar_url=$${idx++}`); values.push(avatarUrl) }
+  if (password !== undefined) {
+    const passwordHash = await hashPassword(password)
+    fields.push(`password_hash=$${idx++}`)
+    values.push(passwordHash)
+  }
+
+  if (fields.length === 0) {
+    // Nothing to update - return current user
+    return getUserById(userId)
+  }
+
+  // If username is provided, ensure uniqueness
+  if (username !== undefined) {
+    const existing = await query('SELECT id FROM users WHERE username = $1 AND id != $2', [username, userId])
+    if (existing && existing.length > 0) {
+      const err = new Error('Username already taken')
+      err.code = 'USERNAME_TAKEN'
+      throw err
+    }
+  }
+
+  values.push(userId)
+  const sql = `UPDATE users SET ${fields.join(', ')} WHERE id = $${idx} RETURNING id, username, email, display_name, role, avatar_url, is_active, created_at`
+  const result = await query(sql, values)
+  if (!result || result.length === 0) return null
+  return toCamelCase(result[0])
+}
+
+// New: admin updates for isActive and role (can update either or both)
+async function updateUserAdmin(userId, { isActive, role }) {
+  console.log('=== updateUserAdmin ===', { userId, isActive, role })
+  const fields = []
+  const values = []
+  let idx = 1
+
+  if (isActive !== undefined) { fields.push(`is_active=$${idx++}`); values.push(isActive) }
+  if (role !== undefined) { fields.push(`role=$${idx++}`); values.push(role) }
+
+  if (fields.length === 0) return getUserById(userId)
+
+  values.push(userId)
+  const sql = `UPDATE users SET ${fields.join(', ')} WHERE id = $${idx} RETURNING id, username, email, display_name, role, avatar_url, is_active, created_at`
+  const result = await query(sql, values)
+  if (!result || result.length === 0) return null
+  return toCamelCase(result[0])
+}
+
 module.exports = {
   hashPassword,
   comparePassword,
@@ -161,5 +220,7 @@ module.exports = {
       isValid: errors.length === 0,
       errors
     }
-  }
+  },
+  updateUserProfile,
+  updateUserAdmin
 }
