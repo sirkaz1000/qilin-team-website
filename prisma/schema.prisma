@@ -48,7 +48,6 @@ model Achievement {
   createdAt   DateTime  @default(now())
   authorId    String
   author      User      @relation(fields: [authorId], references: [id])
-  comments    Comment[]
 }
 
 model Comment {
@@ -58,8 +57,6 @@ model Comment {
   targetType String
   targetId   String
   createdAt  DateTime    @default(now())
-  post       Achievement @relation(fields: [targetId], references: [id], map: "Comment_postId_fkey")
-  post       Post        @relation(fields: [targetId], references: [id], map: "Comment_postId_fkey")
   user       User        @relation(fields: [userId], references: [id])
 }
 
@@ -83,7 +80,6 @@ model RepositoryFile {
   commitHash   String
   createdAt    DateTime   @default(now())
   repository   Repository @relation(fields: [repositoryId], references: [id])
-
   @@unique([repositoryId, path])
 }
 
@@ -129,7 +125,6 @@ model StoreReview {
   createdAt DateTime  @default(now())
   item      StoreItem @relation(fields: [itemId], references: [id])
   user      User      @relation(fields: [userId], references: [id])
-
   @@unique([itemId, userId])
 }
 
