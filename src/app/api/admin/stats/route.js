@@ -1,5 +1,6 @@
-const { verifyToken } = require('@/lib/auth-simple')
-const { readDataFile } = require('@/lib/data-simple')
+const { verifyToken } = require('@/lib/auth')
+const { getUserById } = require('@/lib/auth-simple')
+const { query } = require('@/lib/postgres')
 
 export async function GET(request) {
   try {
@@ -15,31 +16,33 @@ export async function GET(request) {
       return Response.json({ error: 'Invalid token' }, { status: 401 })
     }
 
-    const users = readDataFile('users.json')
-    const user = users.find(u => u.id === decoded.userId)
+    const user = await getUserById(decoded.userId)
 
     if (!user || user.role !== 'ADMIN') {
       return Response.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     // Get total users
-    const totalUsers = users.length
+    const usersResult = await query('SELECT COUNT(*)::int as count FROM "User"')
+    const totalUsers = usersResult[0].count
 
     // Get new users in last 7 days
     const sevenDaysAgo = new Date()
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-    const newUsers = users.filter(u => new Date(u.createdAt) >= sevenDaysAgo).length
+    const newUsersResult = await query('SELECT COUNT(*)::int as count FROM "User" WHERE "createdAt" >= $1', [sevenDaysAgo])
+    const newUsers = newUsersResult[0].count
 
     // Get total admins
-    const totalAdmins = users.filter(u => u.role === 'ADMIN' && u.isActive).length
+    const adminsResult = await query('SELECT COUNT(*)::int as count FROM "User" WHERE role = \'ADMIN\' AND "isActive" = true')
+    const totalAdmins = adminsResult[0].count
 
     // Get total orders
-    const orders = readDataFile('store-orders.json') || []
-    const totalOrders = orders.length
+    const ordersResult = await query('SELECT COUNT(*)::int as count FROM "StoreOrder"')
+    const totalOrders = ordersResult[0].count
 
     // Get total support tickets
-    const tickets = readDataFile('tickets.json')
-    const totalTickets = tickets.length
+    const ticketsResult = await query('SELECT COUNT(*)::int as count FROM "SupportTicket"')
+    const totalTickets = ticketsResult[0].count
 
     return Response.json({
       totalUsers,

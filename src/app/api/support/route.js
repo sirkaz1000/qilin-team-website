@@ -1,5 +1,6 @@
-const { verifyToken } = require('@/lib/auth-simple')
-const { readDataFile, writeDataFile, generateId } = require('@/lib/data-simple')
+const { verifyToken } = require('@/lib/auth')
+const { getUserById, getAllUsers } = require('@/lib/auth-simple')
+const { getTickets, createTicket } = require('@/lib/data-simple')
 
 // Input validation helpers
 function sanitizeInput(input) {
@@ -41,22 +42,17 @@ export async function GET(request) {
       return Response.json({ error: 'Invalid token' }, { status: 401 })
     }
 
-    const users = readDataFile('users.json')
-    const user = users.find(u => u.id === decoded.userId)
+    const user = await getUserById(decoded.userId)
 
     if (!user || !user.isActive) {
       return Response.json({ error: 'User not found' }, { status: 404 })
     }
 
-    const tickets = readDataFile('tickets.json')
+    const tickets = await getTickets(user.role === 'ADMIN' ? null : user.id)
+    const users = await getAllUsers()
     
-    // If admin, get all tickets, otherwise get user's tickets
-    const filteredTickets = user.role === 'ADMIN' 
-      ? tickets 
-      : tickets.filter(t => t.userId === user.id)
-
     // Add user info to tickets
-    const ticketsWithUserInfo = filteredTickets.map(ticket => ({
+    const ticketsWithUserInfo = tickets.map(ticket => ({
       ...ticket,
       user: {
         username: users.find(u => u.id === ticket.userId)?.username || 'Unknown',
@@ -85,8 +81,7 @@ export async function POST(request) {
       return Response.json({ error: 'Invalid token' }, { status: 401 })
     }
 
-    const users = readDataFile('users.json')
-    const user = users.find(u => u.id === decoded.userId)
+    const user = await getUserById(decoded.userId)
 
     if (!user || !user.isActive) {
       return Response.json({ error: 'User not found' }, { status: 404 })
@@ -107,19 +102,11 @@ export async function POST(request) {
       return Response.json({ error: messageValidation.error }, { status: 400 })
     }
 
-    const tickets = readDataFile('tickets.json')
-    const newTicket = {
-      id: generateId(),
+    const newTicket = await createTicket({
       userId: user.id,
-      username: user.username,
-      displayName: user.displayName,
       subject: sanitizeInput(subject.trim()),
-      message: sanitizeInput(message.trim()),
-      status: 'OPEN',
-      createdAt: new Date().toISOString()
-    }
-    tickets.push(newTicket)
-    writeDataFile('tickets.json', tickets)
+      message: sanitizeInput(message.trim())
+    })
 
     return Response.json(newTicket)
   } catch (error) {

@@ -2,7 +2,11 @@ const fs = require('fs')
 const path = require('path')
 const { Pool } = require('pg')
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL })
+const connectionString = process.env.DATABASE_URL
+const pool = new Pool({ 
+  connectionString,
+  ssl: { rejectUnauthorized: false }
+})
 
 async function query(text, params) {
   const res = await pool.query(text, params)
@@ -27,10 +31,10 @@ async function migrateRepositories() {
   for (const r of items) {
     try {
       await query(
-        `INSERT INTO repositories (id, name, description, owner_id, private, created_at)
+        `INSERT INTO "Repository" (id, name, description, "ownerId", "isPublic", "createdAt")
          VALUES ($1,$2,$3,$4,$5,$6)
-         ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, description = EXCLUDED.description, private = EXCLUDED.private`,
-        [r.id || null, r.name, r.description || null, r.ownerId || null, r.isPublic === true ? false : true, r.createdAt ? new Date(r.createdAt) : new Date()]
+         ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, description = EXCLUDED.description, "isPublic" = EXCLUDED."isPublic"`,
+        [r.id || null, r.name, r.description || null, r.ownerId || null, r.isPublic !== false, r.createdAt ? new Date(r.createdAt) : new Date()]
       )
       console.log('Migrated repo:', r.id || r.name)
     } catch (e) {
@@ -45,10 +49,10 @@ async function migrateStoreItems() {
   for (const it of items) {
     try {
       await query(
-        `INSERT INTO store_items (id, title, description, price, author_id, username, display_name, image_url, created_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-         ON CONFLICT (id) DO UPDATE SET title=EXCLUDED.title, description=EXCLUDED.description, price=EXCLUDED.price, image_url=EXCLUDED.image_url`,
-        [it.id || null, it.title, it.description || null, it.price || null, it.authorId || null, it.username || null, it.displayName || null, it.imageUrl || null, it.createdAt ? new Date(it.createdAt) : new Date()]
+        `INSERT INTO "StoreItem" (id, title, description, price, "imageUrl", type, "createdAt")
+         VALUES ($1,$2,$3,$4,$5,$6,$7)
+         ON CONFLICT (id) DO UPDATE SET title=EXCLUDED.title, description=EXCLUDED.description, price=EXCLUDED.price, "imageUrl"=EXCLUDED."imageUrl"`,
+        [it.id || null, it.title, it.description || null, it.price || 0, it.imageUrl || null, it.type || 'SERVICE', it.createdAt ? new Date(it.createdAt) : new Date()]
       )
       console.log('Migrated store item:', it.id || it.title)
     } catch (e) {
@@ -63,10 +67,10 @@ async function migrateTickets() {
   for (const t of items) {
     try {
       await query(
-        `INSERT INTO tickets (id, user_id, subject, body, status, created_at)
+        `INSERT INTO "SupportTicket" (id, "userId", subject, message, status, "createdAt")
          VALUES ($1,$2,$3,$4,$5,$6)
-         ON CONFLICT (id) DO UPDATE SET subject=EXCLUDED.subject, body=EXCLUDED.body, status=EXCLUDED.status`,
-        [t.id || null, t.userId || null, t.subject || null, t.body || null, t.status || 'OPEN', t.createdAt ? new Date(t.createdAt) : new Date()]
+         ON CONFLICT (id) DO UPDATE SET subject=EXCLUDED.subject, message=EXCLUDED.message, status=EXCLUDED.status`,
+        [t.id || null, t.userId || null, t.subject || null, t.body || t.message || '', t.status || 'OPEN', t.createdAt ? new Date(t.createdAt) : new Date()]
       )
       console.log('Migrated ticket:', t.id || t.subject)
     } catch (e) {
@@ -81,14 +85,14 @@ async function migrateFAQs() {
   for (const f of items) {
     try {
       await query(
-        `INSERT INTO faqs (id, question, answer, created_at)
-         VALUES ($1,$2,$3,$4)
-         ON CONFLICT (id) DO UPDATE SET question=EXCLUDED.question, answer=EXCLUDED.answer`,
-        [f.id || null, f.question || null, f.answer || null, f.createdAt ? new Date(f.createdAt) : new Date()]
+        `INSERT INTO "FAQ" (id, "questionAr", "questionEn", "answerAr", "answerEn", "order", "createdAt")
+         VALUES ($1,$2,$3,$4,$5,$6,$7)
+         ON CONFLICT (id) DO UPDATE SET "questionAr"=EXCLUDED."questionAr", "answerAr"=EXCLUDED."answerAr"`,
+        [parseInt(f.id) || null, f.questionAr || f.question || '', f.questionEn || '', f.answerAr || f.answer || '', f.answerEn || '', f.order || 0, f.createdAt ? new Date(f.createdAt) : new Date()]
       )
-      console.log('Migrated faq:', f.id || f.question)
+      console.log('Migrated faq:', f.id || f.questionAr)
     } catch (e) {
-      console.error('FAQ migration error for', f.id || f.question, e.message)
+      console.error('FAQ migration error for', f.id || f.questionAr, e.message)
     }
   }
 }
@@ -98,16 +102,12 @@ async function migrateUsers() {
   console.log('Users to migrate (best-effort):', items.length)
   for (const u of items) {
     try {
-      // Upsert by email if exists, else insert
-      if (!u.email) {
-        console.log('Skipping user without email', u.username)
-        continue
-      }
+      if (!u.email) continue
       await query(
-        `INSERT INTO users (username, email, display_name, avatar_url, role, is_active, created_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7)
-         ON CONFLICT (email) DO UPDATE SET username=EXCLUDED.username, display_name=EXCLUDED.display_name, avatar_url=COALESCE(users.avatar_url, EXCLUDED.avatar_url)`,
-        [u.username || null, u.email, u.displayName || u.display_name || null, u.avatarUrl || u.avatar_url || null, u.role || 'USER', u.isActive === undefined ? true : u.isActive, u.createdAt ? new Date(u.createdAt) : new Date()]
+        `INSERT INTO "User" (id, username, email, "passwordHash", "displayName", "avatarUrl", role, "isActive", "createdAt")
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+         ON CONFLICT (email) DO UPDATE SET username=EXCLUDED.username, "displayName"=EXCLUDED."displayName"`,
+        [u.id || null, u.username, u.email, u.passwordHash || u.password_hash || 'placeholder', u.displayName || u.display_name || u.username, u.avatarUrl || u.avatar_url || null, u.role || 'USER', u.isActive !== false, u.createdAt ? new Date(u.createdAt) : new Date()]
       )
       console.log('Migrated user:', u.email)
     } catch (e) {
@@ -116,34 +116,14 @@ async function migrateUsers() {
   }
 }
 
-async function migrateImagesFromDataURLs() {
-  // Some uploads may have been stored as data URLs in JSON for posts/achievements; we will not store binary in DB but store the data URL as image url
-  // Check posts and achievements JSON if present
-  const posts = readJsonIfExists('posts.json')
-  console.log('Posts to inspect for data URLs:', posts.length)
-  let count = 0
-  for (const p of posts) {
-    if (p.imageUrl && String(p.imageUrl).startsWith('data:')) {
-      try {
-        await query(`INSERT INTO images (owner_id, filename, url, provider, mime_type, size, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7)`, [p.authorId || null, null, p.imageUrl, 'inline', null, null, p.createdAt ? new Date(p.createdAt) : new Date()])
-        count++
-      } catch (e) {
-        console.warn('Failed to store inline image for post', p.id, e.message)
-      }
-    }
-  }
-  console.log('Stored inline images from posts:', count)
-}
-
 async function main() {
   try {
     console.log('Starting migration script...')
+    await migrateUsers()
     await migrateRepositories()
     await migrateStoreItems()
     await migrateTickets()
     await migrateFAQs()
-    await migrateUsers()
-    await migrateImagesFromDataURLs()
 
     console.log('Migration finished successfully')
     process.exit(0)

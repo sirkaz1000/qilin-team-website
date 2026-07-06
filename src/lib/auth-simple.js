@@ -199,7 +199,13 @@ async function updateUserAdmin(userId, { isActive, role }) {
   return toCamelCase(result[0])
 }
 
+async function getAllUsers() {
+  const result = await query('SELECT id, username, email, display_name, role, avatar_url, is_active, created_at FROM users ORDER BY created_at DESC')
+  return result.map(u => toCamelCase(u))
+}
+
 module.exports = {
+  getAllUsers,
   hashPassword,
   comparePassword,
   generateToken,

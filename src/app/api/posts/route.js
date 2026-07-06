@@ -1,5 +1,7 @@
-const { verifyToken } = require('@/lib/auth-simple')
-const { readDataFile, writeDataFile, generateId } = require('@/lib/data-simple')
+const { verifyToken } = require('@/lib/auth')
+const { getUserById } = require('@/lib/auth-simple')
+const { query } = require('@/lib/postgres')
+const { generateId, toCamelCase } = require('@/lib/data-simple')
 
 // Input validation helpers
 function sanitizeInput(input) {
@@ -29,8 +31,8 @@ function validateContent(content) {
 
 export async function GET(request) {
   try {
-    const posts = await getPosts()
-    return Response.json(posts)
+    const result = await query('SELECT * FROM "Post" ORDER BY "isPinned" DESC, "createdAt" DESC')
+    return Response.json(result.map(p => toCamelCase(p)))
   } catch (error) {
     console.error('Error fetching posts:', error)
     return Response.json({ error: 'Failed to fetch posts' }, { status: 500 })
@@ -51,8 +53,7 @@ export async function POST(request) {
       return Response.json({ error: 'Invalid token' }, { status: 401 })
     }
 
-    const users = readDataFile('users.json')
-    const user = users.find(u => u.id === decoded.userId)
+    const user = await getUserById(decoded.userId)
 
     if (!user || !user.isActive) {
       return Response.json({ error: 'User not found' }, { status: 404 })
@@ -73,18 +74,14 @@ export async function POST(request) {
       return Response.json({ error: contentValidation.error }, { status: 400 })
     }
 
-    const newPost = await createPost({
-      title: sanitizeInput(title.trim()),
-      content: sanitizeInput(content.trim()),
-      authorId: user.id,
-      username: user.username,
-      displayName: user.displayName,
-      imageUrl: imageUrl || null,
-      videoUrl: videoUrl || null,
-      isPinned: isPinned || false,
-    })
+    const result = await query(
+      `INSERT INTO "Post" (id, title, content, "authorId", "isPinned", "createdAt")
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING *`,
+      [generateId(), sanitizeInput(title.trim()), sanitizeInput(content.trim()), user.id, isPinned || false, new Date()]
+    )
 
-    return Response.json(newPost)
+    return Response.json(toCamelCase(result[0]))
   } catch (error) {
     console.error('Error creating post:', error)
     return Response.json({ error: 'Failed to create post' }, { status: 500 })

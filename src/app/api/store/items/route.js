@@ -1,9 +1,9 @@
-const { verifyToken } = require('@/lib/auth-simple')
+const { verifyToken } = require('@/lib/auth')
 const { getStoreItems, createStoreItem } = require('@/lib/data-simple')
 
 export async function GET(request) {
   try {
-    const items = getStoreItems()
+    const items = await getStoreItems()
     return Response.json(items)
   } catch (error) {
     console.error('Error fetching store items:', error)
@@ -28,7 +28,7 @@ export async function POST(request) {
     const body = await request.json()
     const { title, description, type, price, imageUrl } = body
 
-    const item = createStoreItem({
+    const item = await createStoreItem({
       title,
       description,
       type: type || 'PRODUCT',

@@ -1,5 +1,7 @@
-const { verifyToken } = require('@/lib/auth-simple')
-const { readDataFile, writeDataFile } = require('@/lib/data-simple')
+const { verifyToken } = require('@/lib/auth')
+const { getUserById } = require('@/lib/auth-simple')
+const { query } = require('@/lib/postgres')
+const { toCamelCase } = require('@/lib/data-simple')
 
 // Input validation helpers
 function sanitizeInput(input) {
@@ -29,23 +31,21 @@ function validateDescription(description) {
 
 export async function GET(request, { params }) {
   try {
-    const achievements = readDataFile('achievements.json')
-    const achievement = achievements.find(a => a.id === params.achievementId)
-
-    if (!achievement) {
+    const result = await query('SELECT * FROM "Achievement" WHERE id = $1', [params.achievementId])
+    if (result.length === 0) {
       return Response.json({ error: 'Achievement not found' }, { status: 404 })
     }
 
-    const users = readDataFile('users.json')
-    const achievementWithAuthor = {
+    const achievement = toCamelCase(result[0])
+    const author = await getUserById(achievement.authorId)
+    
+    return Response.json({
       ...achievement,
       author: {
-        username: users.find(u => u.id === achievement.authorId)?.username || 'Unknown',
-        displayName: users.find(u => u.id === achievement.authorId)?.displayName || 'Unknown'
+        username: author?.username || 'Unknown',
+        displayName: author?.displayName || 'Unknown'
       }
-    }
-
-    return Response.json(achievementWithAuthor)
+    })
   } catch (error) {
     console.error('Error fetching achievement:', error)
     return Response.json({ error: 'Failed to fetch achievement' }, { status: 500 })
@@ -66,21 +66,18 @@ export async function PATCH(request, { params }) {
       return Response.json({ error: 'Invalid token' }, { status: 401 })
     }
 
-    const users = readDataFile('users.json')
-    const user = users.find(u => u.id === decoded.userId)
+    const user = await getUserById(decoded.userId)
 
     if (!user || !user.isActive) {
       return Response.json({ error: 'User not found' }, { status: 404 })
     }
 
-    const achievements = readDataFile('achievements.json')
-    const achievementIndex = achievements.findIndex(a => a.id === params.achievementId)
-
-    if (achievementIndex === -1) {
+    const result = await query('SELECT * FROM "Achievement" WHERE id = $1', [params.achievementId])
+    if (result.length === 0) {
       return Response.json({ error: 'Achievement not found' }, { status: 404 })
     }
 
-    const achievement = achievements[achievementIndex]
+    const achievement = toCamelCase(result[0])
 
     // Check if user is admin or achievement author
     if (user.role !== 'ADMIN' && achievement.authorId !== user.id) {
@@ -88,57 +85,41 @@ export async function PATCH(request, { params }) {
     }
 
     const body = await request.json()
-    const { title, description, iconUrl, imageUrl, videoUrl, isFeatured, commentsClosed } = body
+    const { title, description, iconUrl, imageUrl, videoUrl, isFeatured } = body
 
-    // Validate title if provided
+    const fields = []
+    const values = []
+    let idx = 1
+
     if (title !== undefined) {
       const titleValidation = validateTitle(title)
-      if (!titleValidation.isValid) {
-        return Response.json({ error: titleValidation.error }, { status: 400 })
-      }
-      achievements[achievementIndex].title = sanitizeInput(title.trim())
+      if (!titleValidation.isValid) return Response.json({ error: titleValidation.error }, { status: 400 })
+      fields.push(`title=$${idx++}`); values.push(sanitizeInput(title.trim()))
     }
-
-    // Validate description if provided
     if (description !== undefined) {
       const descriptionValidation = validateDescription(description)
-      if (!descriptionValidation.isValid) {
-        return Response.json({ error: descriptionValidation.error }, { status: 400 })
-      }
-      achievements[achievementIndex].description = sanitizeInput(description.trim())
+      if (!descriptionValidation.isValid) return Response.json({ error: descriptionValidation.error }, { status: 400 })
+      fields.push(`description=$${idx++}`); values.push(sanitizeInput(description.trim()))
     }
+    if (iconUrl !== undefined) { fields.push(`"iconUrl"=$${idx++}`); values.push(sanitizeInput(iconUrl)) }
+    if (isFeatured !== undefined) { fields.push(`"isFeatured"=$${idx++}`); values.push(isFeatured) }
 
-    if (iconUrl !== undefined) {
-      achievements[achievementIndex].iconUrl = sanitizeInput(iconUrl)
-    }
+    if (fields.length === 0) return Response.json(achievement)
 
-    if (imageUrl !== undefined) {
-      achievements[achievementIndex].imageUrl = sanitizeInput(imageUrl)
-    }
+    values.push(params.achievementId)
+    const updateResult = await query(
+      `UPDATE "Achievement" SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
+      values
+    )
 
-    if (videoUrl !== undefined) {
-      achievements[achievementIndex].videoUrl = sanitizeInput(videoUrl)
-    }
-
-    if (isFeatured !== undefined) {
-      achievements[achievementIndex].isFeatured = isFeatured
-    }
-
-    if (commentsClosed !== undefined) {
-      achievements[achievementIndex].commentsClosed = commentsClosed
-    }
-
-    writeDataFile('achievements.json', achievements)
-
-    const updatedAchievement = {
-      ...achievements[achievementIndex],
+    const updatedAchievement = toCamelCase(updateResult[0])
+    return Response.json({
+      ...updatedAchievement,
       author: {
-        username: users.find(u => u.id === achievements[achievementIndex].authorId)?.username || 'Unknown',
-        displayName: users.find(u => u.id === achievements[achievementIndex].authorId)?.displayName || 'Unknown'
+        username: user.username,
+        displayName: user.displayName
       }
-    }
-
-    return Response.json(updatedAchievement)
+    })
   } catch (error) {
     console.error('Error updating achievement:', error)
     return Response.json({ error: 'Failed to update achievement' }, { status: 500 })
@@ -159,29 +140,25 @@ export async function DELETE(request, { params }) {
       return Response.json({ error: 'Invalid token' }, { status: 401 })
     }
 
-    const users = readDataFile('users.json')
-    const user = users.find(u => u.id === decoded.userId)
+    const user = await getUserById(decoded.userId)
 
     if (!user || !user.isActive) {
       return Response.json({ error: 'User not found' }, { status: 404 })
     }
 
-    const achievements = readDataFile('achievements.json')
-    const achievementIndex = achievements.findIndex(a => a.id === params.achievementId)
-
-    if (achievementIndex === -1) {
+    const result = await query('SELECT * FROM "Achievement" WHERE id = $1', [params.achievementId])
+    if (result.length === 0) {
       return Response.json({ error: 'Achievement not found' }, { status: 404 })
     }
 
-    const achievement = achievements[achievementIndex]
+    const achievement = toCamelCase(result[0])
 
     // Check if user is admin or achievement author
     if (user.role !== 'ADMIN' && achievement.authorId !== user.id) {
       return Response.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    achievements.splice(achievementIndex, 1)
-    writeDataFile('achievements.json', achievements)
+    await query('DELETE FROM "Achievement" WHERE id = $1', [params.achievementId])
 
     return Response.json({ success: true })
   } catch (error) {

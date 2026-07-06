@@ -1,5 +1,7 @@
-const { verifyToken } = require('@/lib/auth-simple')
-const { readDataFile, writeDataFile, generateId } = require('@/lib/data-simple')
+const { verifyToken } = require('@/lib/auth')
+const { getUserById, getAllUsers } = require('@/lib/auth-simple')
+const { query } = require('@/lib/postgres')
+const { generateId, toCamelCase } = require('@/lib/data-simple')
 
 // Input validation helpers
 function sanitizeInput(input) {
@@ -23,22 +25,25 @@ export async function GET(request) {
     const targetType = sanitizeInput(searchParams.get('targetType'))
     const targetId = sanitizeInput(searchParams.get('targetId'))
 
-    const comments = readDataFile('comments.json')
-    const users = readDataFile('users.json')
-    
-    let filteredComments = comments
-    if (targetType) {
-      filteredComments = filteredComments.filter(c => c.targetType === targetType)
+    let sql = 'SELECT * FROM "Comment"'
+    const params = []
+    if (targetType && targetId) {
+      sql += ' WHERE "targetType" = $1 AND "targetId" = $2'
+      params.push(targetType, targetId)
     }
-    if (targetId) {
-      filteredComments = filteredComments.filter(c => c.targetId === targetId)
-    }
+    sql += ' ORDER BY "createdAt" DESC'
 
+    const comments = await query(sql, params)
+    const users = await getAllUsers()
+    
     // Add user info to comments
-    const commentsWithUsers = filteredComments.map(comment => ({
-      ...comment,
-      user: users.find(u => u.id === comment.userId) || { username: 'Unknown', displayName: 'Unknown', avatarUrl: null }
-    }))
+    const commentsWithUsers = comments.map(comment => {
+      const c = toCamelCase(comment)
+      return {
+        ...c,
+        user: users.find(u => u.id === c.userId) || { username: 'Unknown', displayName: 'Unknown', avatarUrl: null }
+      }
+    })
 
     return Response.json(commentsWithUsers)
   } catch (error) {
@@ -61,8 +66,7 @@ export async function POST(request) {
       return Response.json({ error: 'Invalid token' }, { status: 401 })
     }
 
-    const users = readDataFile('users.json')
-    const user = users.find(u => u.id === decoded.userId)
+    const user = await getUserById(decoded.userId)
 
     if (!user || !user.isActive) {
       return Response.json({ error: 'User not found' }, { status: 404 })
@@ -78,7 +82,7 @@ export async function POST(request) {
     }
 
     // Validate targetType
-    if (!targetType || !['POST', 'REPOSITORY'].includes(targetType)) {
+    if (!targetType || !['POST', 'REPOSITORY', 'ACHIEVEMENT'].includes(targetType)) {
       return Response.json({ error: 'Invalid target type' }, { status: 400 })
     }
 
@@ -87,26 +91,14 @@ export async function POST(request) {
       return Response.json({ error: 'Target ID is required' }, { status: 400 })
     }
 
-    // Check if comments are closed for the target
-    if (targetType === 'POST') {
-      const posts = readDataFile('posts.json')
-      const post = posts.find(p => p.id === targetId)
-      if (post && post.commentsClosed) {
-        return Response.json({ error: 'Comments are closed for this post' }, { status: 403 })
-      }
-    }
+    const result = await query(
+      `INSERT INTO "Comment" (id, content, "userId", "targetType", "targetId", "createdAt")
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING *`,
+      [generateId(), sanitizeInput(content.trim()), user.id, targetType, targetId, new Date()]
+    )
 
-    const comments = readDataFile('comments.json')
-    const newComment = {
-      id: generateId(),
-      content: sanitizeInput(content.trim()),
-      userId: user.id,
-      targetType: sanitizeInput(targetType),
-      targetId: sanitizeInput(targetId),
-      createdAt: new Date().toISOString()
-    }
-    comments.push(newComment)
-    writeDataFile('comments.json', comments)
+    const newComment = toCamelCase(result[0])
 
     // Add user info to response
     const commentWithUser = {
@@ -135,8 +127,7 @@ export async function DELETE(request) {
       return Response.json({ error: 'Invalid token' }, { status: 401 })
     }
 
-    const users = readDataFile('users.json')
-    const user = users.find(u => u.id === decoded.userId)
+    const user = await getUserById(decoded.userId)
 
     if (!user || !user.isActive) {
       return Response.json({ error: 'User not found' }, { status: 404 })
@@ -149,21 +140,18 @@ export async function DELETE(request) {
       return Response.json({ error: 'Comment ID is required' }, { status: 400 })
     }
 
-    const comments = readDataFile('comments.json')
-    const commentIndex = comments.findIndex(c => c.id === commentId)
-
-    if (commentIndex === -1) {
+    const result = await query('SELECT * FROM "Comment" WHERE id = $1', [commentId])
+    if (result.length === 0) {
       return Response.json({ error: 'Comment not found' }, { status: 404 })
     }
 
-    const comment = comments[commentIndex]
+    const comment = toCamelCase(result[0])
 
     if (user.role !== 'ADMIN' && comment.userId !== user.id) {
       return Response.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    comments.splice(commentIndex, 1)
-    writeDataFile('comments.json', comments)
+    await query('DELETE FROM "Comment" WHERE id = $1', [commentId])
 
     return Response.json({ success: true })
   } catch (error) {

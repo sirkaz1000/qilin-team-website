@@ -1,4 +1,5 @@
-const { verifyToken, hashPassword, updateUserProfile, updateUserAdmin, getUserById, getAllUsers } = require('@/lib/auth-simple')
+const { verifyToken } = require('@/lib/auth')
+const { hashPassword, updateUserProfile, updateUserAdmin, getUserById, getAllUsers } = require('@/lib/auth-simple')
 
 // Input validation helpers
 function sanitizeInput(input) {

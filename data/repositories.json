@@ -3,7 +3,7 @@
     "id": "repo1",
     "name": "qilin-team-website",
     "description": "الموقع الرسمي لفريق قيلين",
-    "ownerId": "admin1",
+    "ownerId": "admin-001",
     "isPublic": true,
     "createdAt": "2026-05-25T00:00:00.000Z"
   },
@@ -11,7 +11,7 @@
     "id": "repo2",
     "name": "team-qilin-website",
     "description": "Official Team Qilin website",
-    "ownerId": "admin1",
+    "ownerId": "admin-001",
     "isPublic": true,
     "createdAt": "2026-05-25T00:00:00.000Z"
   }

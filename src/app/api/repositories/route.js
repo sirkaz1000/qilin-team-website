@@ -1,4 +1,4 @@
-const { verifyToken } = require('@/lib/auth-simple')
+const { verifyToken } = require('@/lib/auth')
 const { getRepositories, createRepository } = require('@/lib/data-simple')
 
 export async function GET(request) {
@@ -15,7 +15,7 @@ export async function GET(request) {
       return Response.json({ error: 'Invalid token' }, { status: 401 })
     }
 
-    const repositories = getRepositories().filter(repo => repo.ownerId === decoded.userId)
+    const repositories = await getRepositories(decoded.userId)
     return Response.json(repositories)
   } catch (error) {
     console.error('Error fetching repositories:', error)
@@ -40,7 +40,7 @@ export async function POST(request) {
     const body = await request.json()
     const { name, description, isPublic } = body
 
-    const repository = createRepository({
+    const repository = await createRepository({
       name,
       description: description || null,
       ownerId: decoded.userId,

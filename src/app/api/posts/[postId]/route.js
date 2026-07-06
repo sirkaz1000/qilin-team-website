@@ -1,5 +1,7 @@
-const { verifyToken } = require('@/lib/auth-simple')
-const { readDataFile, writeDataFile } = require('@/lib/data-simple')
+const { verifyToken } = require('@/lib/auth')
+const { getUserById } = require('@/lib/auth-simple')
+const { query } = require('@/lib/postgres')
+const { toCamelCase } = require('@/lib/data-simple')
 
 // Input validation helpers
 function sanitizeInput(input) {
@@ -29,23 +31,21 @@ function validateContent(content) {
 
 export async function GET(request, { params }) {
   try {
-    const posts = readDataFile('posts.json')
-    const post = posts.find(p => p.id === params.postId)
-
-    if (!post) {
+    const result = await query('SELECT * FROM "Post" WHERE id = $1', [params.postId])
+    if (result.length === 0) {
       return Response.json({ error: 'Post not found' }, { status: 404 })
     }
 
-    const users = readDataFile('users.json')
-    const postWithAuthor = {
+    const post = toCamelCase(result[0])
+    const author = await getUserById(post.authorId)
+    
+    return Response.json({
       ...post,
       author: {
-        username: users.find(u => u.id === post.authorId)?.username || 'Unknown',
-        displayName: users.find(u => u.id === post.authorId)?.displayName || 'Unknown'
+        username: author?.username || 'Unknown',
+        displayName: author?.displayName || 'Unknown'
       }
-    }
-
-    return Response.json(postWithAuthor)
+    })
   } catch (error) {
     console.error('Error fetching post:', error)
     return Response.json({ error: 'Failed to fetch post' }, { status: 500 })
@@ -66,21 +66,18 @@ export async function PATCH(request, { params }) {
       return Response.json({ error: 'Invalid token' }, { status: 401 })
     }
 
-    const users = readDataFile('users.json')
-    const user = users.find(u => u.id === decoded.userId)
+    const user = await getUserById(decoded.userId)
 
     if (!user || !user.isActive) {
       return Response.json({ error: 'User not found' }, { status: 404 })
     }
 
-    const posts = readDataFile('posts.json')
-    const postIndex = posts.findIndex(p => p.id === params.postId)
-
-    if (postIndex === -1) {
+    const result = await query('SELECT * FROM "Post" WHERE id = $1', [params.postId])
+    if (result.length === 0) {
       return Response.json({ error: 'Post not found' }, { status: 404 })
     }
 
-    const post = posts[postIndex]
+    const post = toCamelCase(result[0])
 
     // Check if user is admin or post author
     if (user.role !== 'ADMIN' && post.authorId !== user.id) {
@@ -88,53 +85,40 @@ export async function PATCH(request, { params }) {
     }
 
     const body = await request.json()
-    const { title, content, isPinned, commentsClosed, imageUrl, videoUrl } = body
+    const { title, content, isPinned, imageUrl, videoUrl } = body
 
-    // Validate title if provided
+    const fields = []
+    const values = []
+    let idx = 1
+
     if (title !== undefined) {
       const titleValidation = validateTitle(title)
-      if (!titleValidation.isValid) {
-        return Response.json({ error: titleValidation.error }, { status: 400 })
-      }
-      posts[postIndex].title = sanitizeInput(title.trim())
+      if (!titleValidation.isValid) return Response.json({ error: titleValidation.error }, { status: 400 })
+      fields.push(`title=$${idx++}`); values.push(sanitizeInput(title.trim()))
     }
-
-    // Validate content if provided
     if (content !== undefined) {
       const contentValidation = validateContent(content)
-      if (!contentValidation.isValid) {
-        return Response.json({ error: contentValidation.error }, { status: 400 })
-      }
-      posts[postIndex].content = sanitizeInput(content.trim())
+      if (!contentValidation.isValid) return Response.json({ error: contentValidation.error }, { status: 400 })
+      fields.push(`content=$${idx++}`); values.push(sanitizeInput(content.trim()))
     }
+    if (isPinned !== undefined) { fields.push(`"isPinned"=$${idx++}`); values.push(isPinned) }
+    
+    if (fields.length === 0) return Response.json(post)
 
-    if (isPinned !== undefined) {
-      posts[postIndex].isPinned = isPinned
-    }
+    values.push(params.postId)
+    const updateResult = await query(
+      `UPDATE "Post" SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
+      values
+    )
 
-    if (commentsClosed !== undefined) {
-      posts[postIndex].commentsClosed = commentsClosed
-    }
-
-    if (imageUrl !== undefined) {
-      posts[postIndex].imageUrl = sanitizeInput(imageUrl)
-    }
-
-    if (videoUrl !== undefined) {
-      posts[postIndex].videoUrl = sanitizeInput(videoUrl)
-    }
-
-    writeDataFile('posts.json', posts)
-
-    const updatedPost = {
-      ...posts[postIndex],
+    const updatedPost = toCamelCase(updateResult[0])
+    return Response.json({
+      ...updatedPost,
       author: {
-        username: users.find(u => u.id === posts[postIndex].authorId)?.username || 'Unknown',
-        displayName: users.find(u => u.id === posts[postIndex].authorId)?.displayName || 'Unknown'
+        username: user.username,
+        displayName: user.displayName
       }
-    }
-
-    return Response.json(updatedPost)
+    })
   } catch (error) {
     console.error('Error updating post:', error)
     return Response.json({ error: 'Failed to update post' }, { status: 500 })
@@ -155,29 +139,25 @@ export async function DELETE(request, { params }) {
       return Response.json({ error: 'Invalid token' }, { status: 401 })
     }
 
-    const users = readDataFile('users.json')
-    const user = users.find(u => u.id === decoded.userId)
+    const user = await getUserById(decoded.userId)
 
     if (!user || !user.isActive) {
       return Response.json({ error: 'User not found' }, { status: 404 })
     }
 
-    const posts = readDataFile('posts.json')
-    const postIndex = posts.findIndex(p => p.id === params.postId)
-
-    if (postIndex === -1) {
+    const result = await query('SELECT * FROM "Post" WHERE id = $1', [params.postId])
+    if (result.length === 0) {
       return Response.json({ error: 'Post not found' }, { status: 404 })
     }
 
-    const post = posts[postIndex]
+    const post = toCamelCase(result[0])
 
     // Check if user is admin or post author
     if (user.role !== 'ADMIN' && post.authorId !== user.id) {
       return Response.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    posts.splice(postIndex, 1)
-    writeDataFile('posts.json', posts)
+    await query('DELETE FROM "Post" WHERE id = $1', [params.postId])
 
     return Response.json({ success: true })
   } catch (error) {

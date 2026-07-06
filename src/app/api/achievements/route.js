@@ -1,4 +1,4 @@
-const { verifyToken } = require('@/lib/auth-simple')
+const { verifyToken } = require('@/lib/auth')
 const { getAchievements, createAchievement } = require('@/lib/data-simple')
 
 export async function GET(request) {

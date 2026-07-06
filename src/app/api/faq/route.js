@@ -1,14 +1,12 @@
-const { verifyToken } = require('@/lib/auth-simple')
+const { verifyToken } = require('@/lib/auth')
 const { getFAQs, createFAQ } = require('@/lib/data-simple')
-const fs = require('fs')
-const path = require('path')
 
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url)
     const type = searchParams.get('type') // 'auth' or 'general'
     
-    const faqs = getFAQs()
+    const faqs = await getFAQs()
     
     // Filter by type if specified
     const filteredFAQs = type ? faqs.filter(faq => faq.type === type) : faqs
@@ -37,7 +35,7 @@ export async function POST(request) {
     const body = await request.json()
     const { questionAr, questionEn, answerAr, answerEn, type, order } = body
 
-    const faq = createFAQ({
+    const faq = await createFAQ({
       questionAr,
       questionEn,
       answerAr,
