@@ -1,6 +1,5 @@
 const { verifyToken } = require('@/lib/auth')
-const { getUserById, toCamelCase, hashPassword } = require('@/lib/auth-simple')
-const { readDataFile, writeDataFile } = require('@/lib/data-simple')
+const { getUserById, hashPassword, updateUserProfile } = require('@/lib/auth-simple')
 
 export async function GET(request) {
   try {
@@ -33,8 +32,6 @@ export async function GET(request) {
     return Response.json({ error: 'Failed to get user' }, { status: 500 })
   }
 }
-
-const { updateUserProfile } = require('@/lib/auth-simple')
 
 export async function PATCH(request) {
   try {

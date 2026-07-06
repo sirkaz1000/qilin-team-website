@@ -1,6 +1,4 @@
 const { query } = require('./postgres')
-const fs = require('fs')
-const path = require('path')
 
 // Helper function to convert snake_case to camelCase
 function toCamelCase(obj) {
@@ -21,81 +19,42 @@ function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2)
 }
 
-// Helper function to read JSON file
-function readDataFile(filename) {
-  try {
-    const filePath = path.join(process.cwd(), 'data', filename)
-    if (!fs.existsSync(filePath)) {
-      return []
-    }
-    const data = fs.readFileSync(filePath, 'utf8')
-    return JSON.parse(data)
-  } catch (error) {
-    console.error(`Error reading ${filename}:`, error)
-    return []
-  }
-}
-
-// Helper function to write JSON file
-function writeDataFile(filename, data) {
-  try {
-    const filePath = path.join(process.cwd(), 'data', filename)
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2))
-    return true
-  } catch (error) {
-    console.error(`Error writing ${filename}:`, error)
-    return false
-  }
-}
-
 // Posts functions
 async function getPosts() {
   const result = await query(
-    'SELECT * FROM posts ORDER BY created_at DESC'
+    'SELECT * FROM "Post" ORDER BY "isPinned" DESC, "createdAt" DESC'
   )
-  return result.map(post => toCamelCase({
-    ...post,
-    id: post.id.toString()
-  }))
+  return result.map(post => toCamelCase(post))
 }
 
 async function createPost(postData) {
-  const { title, content, authorId, username, displayName, imageUrl, videoUrl, isPinned } = postData
+  const { title, content, authorId, isPinned } = postData
   const result = await query(
-    `INSERT INTO posts (title, content, author_id, username, display_name, image_url, video_url, is_pinned, created_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    `INSERT INTO "Post" (id, title, content, "authorId", "isPinned", "createdAt")
+     VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING *`,
-    [title, content, authorId, username, displayName, imageUrl, videoUrl, isPinned || false, new Date()]
+    [generateId(), title, content, authorId, isPinned || false, new Date()]
   )
-  return toCamelCase({
-    ...result[0],
-    id: result[0].id.toString()
-  })
+  return toCamelCase(result[0])
 }
 
 // Achievements functions
 async function getAchievements() {
   const result = await query(
-    'SELECT * FROM achievements ORDER BY created_at DESC'
+    'SELECT * FROM "Achievement" ORDER BY "createdAt" DESC'
   )
-  return result.map(achievement => toCamelCase({
-    ...achievement,
-    id: achievement.id.toString()
-  }))
+  return result.map(achievement => toCamelCase(achievement))
 }
 
 async function createAchievement(achievementData) {
-  const { title, description, iconUrl, imageUrl, videoUrl, isFeatured, authorId } = achievementData
+  const { title, description, iconUrl, isFeatured, authorId } = achievementData
   const result = await query(
-    `INSERT INTO achievements (title, description, icon_url, image_url, video_url, is_featured, author_id, created_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `INSERT INTO "Achievement" (id, title, description, "iconUrl", "isFeatured", "authorId", "createdAt")
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
      RETURNING *`,
-    [title, description, iconUrl, imageUrl, videoUrl, isFeatured || false, authorId, new Date()]
+    [generateId(), title, description, iconUrl, isFeatured || false, authorId, new Date()]
   )
-  return toCamelCase({
-    ...result[0],
-    id: result[0].id.toString()
-  })
+  return toCamelCase(result[0])
 }
 
 // Repositories functions
@@ -197,9 +156,8 @@ async function createFAQ(faqData) {
 }
 
 module.exports = {
-  readDataFile,
-  writeDataFile,
   generateId,
+  toCamelCase,
   getPosts,
   createPost,
   getAchievements,
