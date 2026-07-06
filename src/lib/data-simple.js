@@ -1,6 +1,4 @@
 const { query } = require('./postgres')
-const fs = require('fs')
-const path = require('path')
 
 // Helper function to convert snake_case to camelCase
 function toCamelCase(obj) {
@@ -19,33 +17,6 @@ function toCamelCase(obj) {
 // Helper function to generate unique ID
 function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2)
-}
-
-// Helper function to read JSON file
-function readDataFile(filename) {
-  try {
-    const filePath = path.join(process.cwd(), 'data', filename)
-    if (!fs.existsSync(filePath)) {
-      return []
-    }
-    const data = fs.readFileSync(filePath, 'utf8')
-    return JSON.parse(data)
-  } catch (error) {
-    console.error(`Error reading ${filename}:`, error)
-    return []
-  }
-}
-
-// Helper function to write JSON file
-function writeDataFile(filename, data) {
-  try {
-    const filePath = path.join(process.cwd(), 'data', filename)
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2))
-    return true
-  } catch (error) {
-    console.error(`Error writing ${filename}:`, error)
-    return false
-  }
 }
 
 // Posts functions
@@ -98,201 +69,185 @@ async function createAchievement(achievementData) {
   })
 }
 
-// Repositories functions (placeholder - using JSON for now)
-function getRepositories() {
-  const fs = require('fs')
-  const path = require('path')
-  try {
-    const filePath = path.join(process.cwd(), 'data', 'repositories.json')
-    if (!fs.existsSync(filePath)) {
-      return []
-    }
-    const data = fs.readFileSync(filePath, 'utf8')
-    return JSON.parse(data)
-  } catch (error) {
-    console.error(`Error reading repositories.json:`, error)
-    return []
-  }
+// Repositories functions
+async function getRepositories() {
+  const result = await query(
+    'SELECT * FROM repositories ORDER BY created_at DESC'
+  )
+  return result.map(repo => toCamelCase({
+    ...repo,
+    id: repo.id.toString()
+  }))
 }
 
-function createRepository(repoData) {
-  const fs = require('fs')
-  const path = require('path')
-  try {
-    const repositories = getRepositories()
-    const newRepo = {
-      id: generateId(),
-      ...repoData,
-      createdAt: new Date().toISOString()
-    }
-    repositories.push(newRepo)
-    const filePath = path.join(process.cwd(), 'data', 'repositories.json')
-    fs.writeFileSync(filePath, JSON.stringify(repositories, null, 2))
-    return newRepo
-  } catch (error) {
-    console.error(`Error writing repositories.json:`, error)
-    return null
-  }
+async function createRepository(repoData) {
+  const { name, description, url, isPublic, stars, forks, language } = repoData
+  const id = generateId()
+  const result = await query(
+    `INSERT INTO repositories (id, name, description, url, is_public, stars, forks, language, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+     RETURNING *`,
+    [id, name, description, url, isPublic !== undefined ? isPublic : true, stars || 0, forks || 0, language || null, new Date(), new Date()]
+  )
+  return toCamelCase({
+    ...result[0],
+    id: result[0].id.toString()
+  })
 }
 
-// Store items functions (placeholder - using JSON for now)
-function getStoreItems() {
-  const fs = require('fs')
-  const path = require('path')
-  try {
-    const filePath = path.join(process.cwd(), 'data', 'store-items.json')
-    if (!fs.existsSync(filePath)) {
-      return []
-    }
-    const data = fs.readFileSync(filePath, 'utf8')
-    return JSON.parse(data)
-  } catch (error) {
-    console.error(`Error reading store-items.json:`, error)
-    return []
-  }
+// Store items functions
+async function getStoreItems() {
+  const result = await query(
+    'SELECT * FROM store_items ORDER BY created_at DESC'
+  )
+  return result.map(item => toCamelCase({
+    ...item,
+    id: item.id.toString()
+  }))
 }
 
-function createStoreItem(itemData) {
-  const fs = require('fs')
-  const path = require('path')
-  try {
-    const items = getStoreItems()
-    const newItem = {
-      id: generateId(),
-      ...itemData,
-      createdAt: new Date().toISOString(),
-      reviews: []
-    }
-    items.push(newItem)
-    const filePath = path.join(process.cwd(), 'data', 'store-items.json')
-    fs.writeFileSync(filePath, JSON.stringify(items, null, 2))
-    return newItem
-  } catch (error) {
-    console.error(`Error writing store-items.json:`, error)
-    return null
-  }
+async function createStoreItem(itemData) {
+  const { title, description, price, imageUrl, videoUrl, category, isDigital, isAvailable } = itemData
+  const id = generateId()
+  const result = await query(
+    `INSERT INTO store_items (id, title, description, price, image_url, video_url, category, is_digital, is_available, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+     RETURNING *`,
+    [id, title, description, price, imageUrl || null, videoUrl || null, category || null, isDigital !== undefined ? isDigital : true, isAvailable !== undefined ? isAvailable : true, new Date(), new Date()]
+  )
+  return toCamelCase({
+    ...result[0],
+    id: result[0].id.toString()
+  })
 }
 
-function updateStoreItem(id, itemData) {
-  const fs = require('fs')
-  const path = require('path')
-  try {
-    const items = getStoreItems()
-    const index = items.findIndex(item => item.id === id)
-    if (index === -1) {
-      return null
-    }
-    items[index] = {
-      ...items[index],
-      ...itemData,
-      updatedAt: new Date().toISOString()
-    }
-    const filePath = path.join(process.cwd(), 'data', 'store-items.json')
-    fs.writeFileSync(filePath, JSON.stringify(items, null, 2))
-    return items[index]
-  } catch (error) {
-    console.error(`Error writing store-items.json:`, error)
-    return null
+async function updateStoreItem(id, itemData) {
+  const { title, description, price, imageUrl, videoUrl, category, isDigital, isAvailable } = itemData
+  const updates = []
+  const values = []
+  let paramIndex = 1
+
+  if (title !== undefined) {
+    updates.push(`title = $${paramIndex}`)
+    values.push(title)
+    paramIndex++
   }
+  if (description !== undefined) {
+    updates.push(`description = $${paramIndex}`)
+    values.push(description)
+    paramIndex++
+  }
+  if (price !== undefined) {
+    updates.push(`price = $${paramIndex}`)
+    values.push(price)
+    paramIndex++
+  }
+  if (imageUrl !== undefined) {
+    updates.push(`image_url = $${paramIndex}`)
+    values.push(imageUrl)
+    paramIndex++
+  }
+  if (videoUrl !== undefined) {
+    updates.push(`video_url = $${paramIndex}`)
+    values.push(videoUrl)
+    paramIndex++
+  }
+  if (category !== undefined) {
+    updates.push(`category = $${paramIndex}`)
+    values.push(category)
+    paramIndex++
+  }
+  if (isDigital !== undefined) {
+    updates.push(`is_digital = $${paramIndex}`)
+    values.push(isDigital)
+    paramIndex++
+  }
+  if (isAvailable !== undefined) {
+    updates.push(`is_available = $${paramIndex}`)
+    values.push(isAvailable)
+    paramIndex++
+  }
+
+  updates.push(`updated_at = $${paramIndex}`)
+  values.push(new Date())
+  paramIndex++
+
+  values.push(id)
+
+  const result = await query(
+    `UPDATE store_items SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
+    values
+  )
+
+  if (result.length === 0) return null
+
+  return toCamelCase({
+    ...result[0],
+    id: result[0].id.toString()
+  })
 }
 
-function deleteStoreItem(id) {
-  const fs = require('fs')
-  const path = require('path')
-  try {
-    const items = getStoreItems()
-    const index = items.findIndex(item => item.id === id)
-    if (index === -1) {
-      return false
-    }
-    items.splice(index, 1)
-    const filePath = path.join(process.cwd(), 'data', 'store-items.json')
-    fs.writeFileSync(filePath, JSON.stringify(items, null, 2))
-    return true
-  } catch (error) {
-    console.error(`Error writing store-items.json:`, error)
-    return false
-  }
+async function deleteStoreItem(id) {
+  const result = await query(
+    'DELETE FROM store_items WHERE id = $1 RETURNING id',
+    [id]
+  )
+  return result.length > 0
 }
 
-// Tickets functions (placeholder - using JSON for now)
-function getTickets() {
-  const fs = require('fs')
-  const path = require('path')
-  try {
-    const filePath = path.join(process.cwd(), 'data', 'tickets.json')
-    if (!fs.existsSync(filePath)) {
-      return []
-    }
-    const data = fs.readFileSync(filePath, 'utf8')
-    return JSON.parse(data)
-  } catch (error) {
-    console.error(`Error reading tickets.json:`, error)
-    return []
-  }
+// Tickets functions
+async function getTickets() {
+  const result = await query(
+    'SELECT * FROM tickets ORDER BY created_at DESC'
+  )
+  return result.map(ticket => toCamelCase({
+    ...ticket,
+    id: ticket.id.toString()
+  }))
 }
 
-function createTicket(ticketData) {
-  const fs = require('fs')
-  const path = require('path')
-  try {
-    const tickets = getTickets()
-    const newTicket = {
-      id: generateId(),
-      ...ticketData,
-      createdAt: new Date().toISOString(),
-      status: 'OPEN'
-    }
-    tickets.push(newTicket)
-    const filePath = path.join(process.cwd(), 'data', 'tickets.json')
-    fs.writeFileSync(filePath, JSON.stringify(tickets, null, 2))
-    return newTicket
-  } catch (error) {
-    console.error(`Error writing tickets.json:`, error)
-    return null
-  }
+async function createTicket(ticketData) {
+  const { userId, subject, description, status, priority } = ticketData
+  const id = generateId()
+  const result = await query(
+    `INSERT INTO tickets (id, user_id, subject, description, status, priority, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+     RETURNING *`,
+    [id, userId, subject, description || null, status || 'OPEN', priority || 'MEDIUM', new Date(), new Date()]
+  )
+  return toCamelCase({
+    ...result[0],
+    id: result[0].id.toString()
+  })
 }
 
-// FAQ functions (placeholder - using JSON for now)
-function getFAQs() {
-  const fs = require('fs')
-  const path = require('path')
-  try {
-    const filePath = path.join(process.cwd(), 'data', 'faq.json')
-    if (!fs.existsSync(filePath)) {
-      return []
-    }
-    const data = fs.readFileSync(filePath, 'utf8')
-    return JSON.parse(data)
-  } catch (error) {
-    console.error(`Error reading faq.json:`, error)
-    return []
-  }
+// FAQ functions
+async function getFAQs() {
+  const result = await query(
+    'SELECT * FROM faq WHERE is_active = true ORDER BY created_at DESC'
+  )
+  return result.map(faq => toCamelCase({
+    ...faq,
+    id: faq.id.toString()
+  }))
 }
 
-function createFAQ(faqData) {
-  const fs = require('fs')
-  const path = require('path')
-  try {
-    const faqs = getFAQs()
-    const newFAQ = {
-      id: generateId(),
-      ...faqData,
-      createdAt: new Date().toISOString()
-    }
-    faqs.push(newFAQ)
-    const filePath = path.join(process.cwd(), 'data', 'faq.json')
-    fs.writeFileSync(filePath, JSON.stringify(faqs, null, 2))
-    return newFAQ
-  } catch (error) {
-    console.error(`Error writing faq.json:`, error)
-    return null
-  }
+async function createFAQ(faqData) {
+  const { question, answer, category, isActive } = faqData
+  const id = generateId()
+  const result = await query(
+    `INSERT INTO faq (id, question, answer, category, is_active, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     RETURNING *`,
+    [id, question, answer, category || null, isActive !== undefined ? isActive : true, new Date(), new Date()]
+  )
+  return toCamelCase({
+    ...result[0],
+    id: result[0].id.toString()
+  })
 }
 
 module.exports = {
-  readDataFile,
-  writeDataFile,
   generateId,
   getPosts,
   createPost,
