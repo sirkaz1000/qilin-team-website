@@ -1,5 +1,5 @@
-const { getUserById, verifyToken, toCamelCase, hashPassword } = require('@/lib/auth-simple')
-const { readDataFile, writeDataFile } = require('@/lib/data-simple')
+const { getUserById, verifyToken, hashPassword } = require('@/lib/auth-simple')
+const { query } = require('@/lib/postgres')
 
 export async function GET(request) {
   try {
@@ -50,45 +50,69 @@ export async function PATCH(request) {
     const body = await request.json()
     const { displayName, username, avatarUrl, password } = body
 
-    const users = readDataFile('users.json')
-    const userIndex = users.findIndex(u => u.id === decoded.userId)
-
-    if (userIndex === -1) {
-      return Response.json({ error: 'User not found' }, { status: 404 })
-    }
+    // Build dynamic update query
+    const updates = []
+    const values = []
+    let paramIndex = 1
 
     if (displayName !== undefined) {
-      users[userIndex].displayName = displayName
+      updates.push(`display_name = $${paramIndex}`)
+      values.push(displayName.trim())
+      paramIndex++
     }
 
     if (username !== undefined) {
       // Check if username is already taken
-      const existingUser = users.find(u => u.username === username && u.id !== decoded.userId)
-      if (existingUser) {
+      const existingUser = await query(
+        'SELECT id FROM users WHERE username = $1 AND id != $2',
+        [username.trim(), decoded.userId]
+      )
+      if (existingUser.length > 0) {
         return Response.json({ error: 'Username already taken' }, { status: 400 })
       }
-      users[userIndex].username = username
+      updates.push(`username = $${paramIndex}`)
+      values.push(username.trim())
+      paramIndex++
     }
 
     if (avatarUrl !== undefined) {
-      users[userIndex].avatarUrl = avatarUrl
+      updates.push(`avatar_url = $${paramIndex}`)
+      values.push(avatarUrl.trim())
+      paramIndex++
     }
 
     if (password !== undefined) {
-      users[userIndex].passwordHash = hashPassword(password)
+      const passwordHash = await hashPassword(password)
+      updates.push(`password_hash = $${paramIndex}`)
+      values.push(passwordHash)
+      paramIndex++
     }
 
-    writeDataFile('users.json', users)
+    if (updates.length === 0) {
+      return Response.json({ error: 'No fields to update' }, { status: 400 })
+    }
+
+    // Add user ID as last parameter
+    values.push(decoded.userId)
+
+    const result = await query(
+      `UPDATE users SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING id, username, email, display_name, role, avatar_url, is_active, created_at`,
+      values
+    )
+
+    if (result.length === 0) {
+      return Response.json({ error: 'User not found' }, { status: 404 })
+    }
 
     const updatedUser = {
-      id: users[userIndex].id,
-      username: users[userIndex].username,
-      email: users[userIndex].email,
-      displayName: users[userIndex].displayName,
-      avatarUrl: users[userIndex].avatarUrl,
-      role: users[userIndex].role,
-      isActive: users[userIndex].isActive,
-      createdAt: users[userIndex].createdAt,
+      id: result[0].id,
+      username: result[0].username,
+      email: result[0].email,
+      displayName: result[0].display_name,
+      avatarUrl: result[0].avatar_url,
+      role: result[0].role,
+      isActive: result[0].is_active,
+      createdAt: result[0].created_at,
     }
 
     return Response.json(updatedUser)
