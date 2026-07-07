@@ -13,17 +13,21 @@ export function middleware(request) {
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
   
-  // Content Security Policy (basic)
+  // Content Security Policy (relaxed for global compatibility)
   response.headers.set('Content-Security-Policy', 
     "default-src 'self'; " +
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
-    "style-src 'self' 'unsafe-inline'; " +
-    "img-src 'self' data: https:; " +
-    "font-src 'self'; " +
-    "connect-src 'self'; " +
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; " +
+    "style-src 'self' 'unsafe-inline' https:; " +
+    "img-src 'self' data: https: http:; " +
+    "font-src 'self' data: https:; " +
+    "connect-src 'self' https:; " +
     "frame-ancestors 'self';"
   )
-
+  
+  // Performance headers
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+  response.headers.set('X-Download-Options', 'noopen')
+  
   return response
 }
 

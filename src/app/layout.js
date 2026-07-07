@@ -11,17 +11,18 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata = {
   title: 'Team Qilin - فريق البرمجة والتطوير',
   description: 'فريق ناشيء في مجال البرمجة و التطوير في السوشيال ميديا نسعي لرضي عملائنا بكل السبل. Team Qilin - Programming, Development & Social Media',
-  keywords: ['Team Qilin', 'برمجة', 'تطوير', 'سوشيال ميديا', 'programming', 'development', 'social media', 'qilin'],
+  keywords: ['Team Qilin', 'برمجة', 'تطوير', 'سوشيال ميديا', 'programming', 'development', 'social media', 'qilin', 'web development', 'mobile development', 'UI/UX design'],
   authors: [{ name: 'Team Qilin' }],
   creator: 'Team Qilin',
   publisher: 'Team Qilin',
-  metadataBase: new URL('https://team.qilin'),
+  metadataBase: new URL('https://qilin-team-website.vercel.app'),
   openGraph: {
     title: 'Team Qilin - فريق البرمجة والتطوير',
     description: 'فريق ناشيء في مجال البرمجة و التطوير في السوشيال ميديا نسعي لرضي عملائنا بكل السبل',
-    url: 'https://team.qilin',
+    url: 'https://qilin-team-website.vercel.app',
     siteName: 'Team Qilin',
     locale: 'ar',
+    alternateLocale: ['en'],
     type: 'website',
   },
   twitter: {
@@ -44,6 +45,15 @@ export const metadata = {
   verification: {
     google: 'google-site-verification-code',
   },
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+  },
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#1a1a1a' },
+  ],
 }
 
 export default function RootLayout({ children }) {
