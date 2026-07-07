@@ -90,11 +90,6 @@ const nextConfig = {
   
   // Optimize for production
   swcMinify: true,
-  
-  // Experimental features for better performance
-  experimental: {
-    optimizeCss: true,
-  },
 }
 
 module.exports = nextConfig
