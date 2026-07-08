@@ -57,27 +57,6 @@ async function createAchievement(achievementData) {
   return toCamelCase(result[0])
 }
 
-// Repositories functions
-async function getRepositories(ownerId) {
-  const sql = ownerId 
-    ? 'SELECT * FROM "Repository" WHERE "ownerId" = $1 ORDER BY "createdAt" DESC'
-    : 'SELECT * FROM "Repository" ORDER BY "createdAt" DESC'
-  const params = ownerId ? [ownerId] : []
-  const result = await query(sql, params)
-  return result.map(r => toCamelCase(r))
-}
-
-async function createRepository(repoData) {
-  const { name, description, ownerId, isPublic } = repoData
-  const result = await query(
-    `INSERT INTO "Repository" (id, name, description, "ownerId", "isPublic", "createdAt")
-     VALUES ($1, $2, $3, $4, $5, $6)
-     RETURNING *`,
-    [generateId(), name, description, ownerId, isPublic !== false, new Date()]
-  )
-  return toCamelCase(result[0])
-}
-
 // Store items functions
 async function getStoreItems() {
   const result = await query('SELECT * FROM "StoreItem" ORDER BY "createdAt" DESC')
@@ -162,8 +141,6 @@ module.exports = {
   createPost,
   getAchievements,
   createAchievement,
-  getRepositories,
-  createRepository,
   getStoreItems,
   createStoreItem,
   updateStoreItem,

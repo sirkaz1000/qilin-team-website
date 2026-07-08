@@ -19,10 +19,8 @@ model User {
   createdAt      DateTime        @default(now())
   achievements   Achievement[]
   comments       Comment[]
-  commits        Commit[]
   notifications  Notification[]
   posts          Post[]
-  repositories   Repository[]
   storeOrders    StoreOrder[]
   storeReviews   StoreReview[]
   supportTickets SupportTicket[]
@@ -58,40 +56,6 @@ model Comment {
   targetId   String
   createdAt  DateTime    @default(now())
   user       User        @relation(fields: [userId], references: [id])
-}
-
-model Repository {
-  id          String           @id @default(cuid())
-  name        String
-  description String?
-  ownerId     String
-  isPublic    Boolean          @default(true)
-  createdAt   DateTime         @default(now())
-  commits     Commit[]
-  owner       User             @relation(fields: [ownerId], references: [id])
-  files       RepositoryFile[]
-}
-
-model RepositoryFile {
-  id           String     @id @default(cuid())
-  repositoryId String
-  path         String
-  content      String
-  commitHash   String
-  createdAt    DateTime   @default(now())
-  repository   Repository @relation(fields: [repositoryId], references: [id])
-  @@unique([repositoryId, path])
-}
-
-model Commit {
-  id           String     @id @default(cuid())
-  repositoryId String
-  message      String
-  authorId     String
-  hash         String     @unique
-  createdAt    DateTime   @default(now())
-  author       User       @relation(fields: [authorId], references: [id])
-  repository   Repository @relation(fields: [repositoryId], references: [id])
 }
 
 model StoreItem {
