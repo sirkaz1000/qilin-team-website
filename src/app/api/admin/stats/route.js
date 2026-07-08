@@ -23,17 +23,17 @@ export async function GET(request) {
     }
 
     // Get total users
-    const usersResult = await query('SELECT COUNT(*)::int as count FROM "User"')
+    const usersResult = await query('SELECT COUNT(*)::int as count FROM users')
     const totalUsers = usersResult[0].count
 
     // Get new users in last 7 days
     const sevenDaysAgo = new Date()
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-    const newUsersResult = await query('SELECT COUNT(*)::int as count FROM "User" WHERE "createdAt" >= $1', [sevenDaysAgo])
+    const newUsersResult = await query('SELECT COUNT(*)::int as count FROM users WHERE created_at >= $1', [sevenDaysAgo])
     const newUsers = newUsersResult[0].count
 
     // Get total admins
-    const adminsResult = await query('SELECT COUNT(*)::int as count FROM "User" WHERE role = \'ADMIN\' AND "isActive" = true')
+    const adminsResult = await query('SELECT COUNT(*)::int as count FROM users WHERE role = $1 AND is_active = true', ['ADMIN'])
     const totalAdmins = adminsResult[0].count
 
     // Get total orders
